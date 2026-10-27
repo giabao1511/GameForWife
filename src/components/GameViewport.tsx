@@ -2,10 +2,9 @@
 
 import type { CSSProperties, ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useUiStore } from '@/store/useUiStore';
 import {
   PERIOD_THEMES,
-  getActivePeriod,
+  useActivePeriod,
 } from '@/lib/timeContext';
 
 /** Centered mobile container for the whole game, with a real-time ambient
@@ -13,10 +12,9 @@ import {
  * latenight. Height-aware: children control centering (the card stage uses
  * flex-1). */
 export default function GameViewport({ children }: { children: ReactNode }) {
-  // Subscribing to the override re-renders on dev-toggle; getActivePeriod()
-  // reads it (falling back to the real clock) inside.
-  useUiStore((s) => s.devPeriodOverride);
-  const period = getActivePeriod();
+  // useActivePeriod() is render-safe: deterministic on first paint, then
+  // tracks the real clock; a dev override repaints it immediately.
+  const period = useActivePeriod();
   const theme = PERIOD_THEMES[period];
 
   const overlayStyle: CSSProperties = { background: theme.overlay };

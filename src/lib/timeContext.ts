@@ -6,10 +6,22 @@
  * TimeSlot at 11:30 / 18:00 / 22:30 boundaries). The spec boundaries here are
  * on the hour: 11:00 / 17:00 / 23:00.
  */
+'use client';
+
+import { useEffect, useState } from 'react';
 import { useUiStore } from '@/store/useUiStore';
 import type { RealTimePeriod, TimeSlot } from '@/data/types';
 
 export type { RealTimePeriod } from '@/data/types';
+
+/**
+ * Fixed period shown on the very first render (pre-effect) when no dev
+ * override is set. Deterministic across server and client, so a client
+ * component that reads it during render never touches `new Date()` — Next.js
+ * 16 blocks that at prerender ("blocking-prerender-current-time-client").
+ * A post-mount effect immediately reconciles to the real clock.
+ */
+const DEFAULT_PERIOD: RealTimePeriod = 'morning';
 
 export const PERIODS: readonly RealTimePeriod[] = [
   'morning',
@@ -44,6 +56,31 @@ export function periodToTimeSlot(p: RealTimePeriod): TimeSlot {
 /** The period ambience/UI actually use: a dev override wins over the clock. */
 export function getActivePeriod(date: Date = new Date()): RealTimePeriod {
   return useUiStore.getState().devPeriodOverride ?? getRealTimePeriod(date);
+}
+
+/**
+ * Render-safe period source for client components.
+ *
+ * Subscribes to the (reactive) dev override and resolves it synchronously, so
+ * picking a period in the dev toggle repaints immediately. With no override it
+ * returns the deterministic DEFAULT_PERIOD on the first render, then a
+ * post-mount effect + minute-level interval track the real clock. This keeps
+ * `new Date()` out of the render body — which Next.js 16's prerender blocks.
+ *
+ * Use this inside components; use getActivePeriod() from non-render code
+ * (store actions, effects, event handlers).
+ */
+export function useActivePeriod(): RealTimePeriod {
+  const override = useUiStore((s) => s.devPeriodOverride);
+  const [realPeriod, setRealPeriod] = useState<RealTimePeriod>(DEFAULT_PERIOD);
+
+  useEffect(() => {
+    setRealPeriod(getRealTimePeriod());
+    const id = window.setInterval(() => setRealPeriod(getRealTimePeriod()), 60_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  return override ?? realPeriod;
 }
 
 export interface PeriodTheme {

@@ -2,8 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useGameStore } from '@/store/useGameStore';
-import { useUiStore } from '@/store/useUiStore';
-import { getActivePeriod } from '@/lib/timeContext';
+import { useActivePeriod } from '@/lib/timeContext';
 import type { GameStats } from '@/data/types';
 
 /**
@@ -35,9 +34,9 @@ function avatarState(stats: GameStats, period: string): AvatarState {
  */
 export default function AvatarReaction({ className = '' }: { className?: string }) {
   const stats = useGameStore((s) => s.stats);
-  // Re-render when the dev override changes; getActivePeriod() applies it.
-  useUiStore((s) => s.devPeriodOverride);
-  const period = getActivePeriod();
+  // Render-safe: deterministic first paint, then tracks the real clock; a
+  // dev override repaints it immediately.
+  const period = useActivePeriod();
   const state = avatarState(stats, period);
 
   return (

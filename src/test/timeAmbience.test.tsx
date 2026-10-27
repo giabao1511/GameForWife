@@ -1,7 +1,8 @@
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, renderHook } from '@testing-library/react';
 import GameViewport from '@/components/GameViewport';
 import AvatarReaction from '@/components/card/AvatarReaction';
+import { useActivePeriod } from '@/lib/timeContext';
 import { useUiStore } from '@/store/useUiStore';
 import { useGameStore } from '@/store/useGameStore';
 
@@ -13,6 +14,21 @@ beforeEach(() => {
 // vitest has no globals here, so testing-library's auto-cleanup is off —
 // tear down between tests or queries see the previous render too.
 afterEach(cleanup);
+
+describe('useActivePeriod', () => {
+  it('is deterministic before mount when no override is set', () => {
+    // First render (pre-effect) must not read the wall clock, or Next's
+    // prerender blocks it — it falls back to a fixed default.
+    const { result } = renderHook(() => useActivePeriod());
+    expect(['morning', 'afternoon', 'evening', 'latenight']).toContain(result.current);
+  });
+
+  it('honors the dev override immediately, no wait for the clock', () => {
+    useUiStore.setState({ devPeriodOverride: 'evening' });
+    const { result } = renderHook(() => useActivePeriod());
+    expect(result.current).toBe('evening');
+  });
+});
 
 describe('GameViewport ambience', () => {
   it('marks the active period on the viewport root', () => {
