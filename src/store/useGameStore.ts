@@ -17,8 +17,10 @@ import { GLOBAL_UP_FALLBACK_OUTCOMES } from '@/data/upOutcomes';
 import { deathsForStat, type DeathId } from '@/data/deaths';
 import { MEMORIES_DATA, type MemoryItem } from '@/data/memories';
 import { getCurrentTimeSlot } from '@/lib/timeSlot';
+import { getActivePeriod } from '@/lib/timeContext';
 import { haptic } from '@/lib/haptics';
 import { playVoiceVictory, playItemPop } from '@/lib/audio';
+import { TIME_LATENIGHT_SPECIAL_ID } from '@/data/timeCards';
 
 const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
 
@@ -176,6 +178,12 @@ export interface GameStore {
   isScrapbookOpen: boolean;
   /** Milestone Voucher Wallet modal visibility. */
   isVoucherWalletOpen: boolean;
+  /**
+   * Late-night special (TIME_LATENIGHT_SPECIAL_ID) already served this run.
+   * Session-scoped by design — it must draw at most once per run and is
+   * intentionally NOT persisted (restarts reset it, so a new run gets it).
+   */
+  lateNightSpecialDrawn: boolean;
 
   applyChoice: (direction: SwipeDirection) => void;
   useItem: (itemId: InventoryItemId) => void;
@@ -250,6 +258,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   isDeathGalleryOpen: false,
   isScrapbookOpen: false,
   isVoucherWalletOpen: false,
+  lateNightSpecialDrawn: false,
 
   applyChoice: (direction) => {
     const state = get();
@@ -468,6 +477,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const state = get();
     if (state.isGameOver || state.isVictory) return;
 
+    // Late-night guarantee: when the active period is latenight and the
+    // special hasn't been drawn this session, it is served first — even
+    // ahead of a pending chained card (spec: "guaranteed as the first
+    // drawn card" of a late session). Skipped when the deck lacks it.
+    if (
+      getActivePeriod() === 'latenight' &&
+      !state.lateNightSpecialDrawn
+    ) {
+      const special = deck.find((c) => c.id === TIME_LATENIGHT_SPECIAL_ID);
+      if (special) {
+        set({ currentCard: special, lateNightSpecialDrawn: true });
+        return;
+      }
+    }
+
     // Deterministic chained card wins over the random draw.
     if (state.nextChainedCardId) {
       const chained = deck.find((c) => c.id === state.nextChainedCardId);
@@ -488,7 +512,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const candidates = fresh.length > 0 ? fresh : pool;
     if (candidates.length === 0) return;
 
-    const card = candidates[Math.floor(Math.random() * candidates.length)];
+    // Real-time period boost: 70% of draws prefer cards tagged for the
+    // active period; otherwise fall back to the standard candidate pool.
+    // Untagged legacy decks have an empty `matching` and behave as before.
+    const period = getActivePeriod();
+    const matching = candidates.filter((c) => c.preferredPeriod === period);
+    const pick =
+      matching.length > 0 && Math.random() < 0.7 ? matching : candidates;
+    const card = pick[Math.floor(Math.random() * pick.length)];
     set({ currentCard: card });
   },
 
@@ -519,6 +550,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       voucherWallet: loadWallet(),
       unlockedMemoryIds: loadUnlockedMemories(),
       newlyUnlockedMemory: null,
+      lateNightSpecialDrawn: false,
     });
     get().drawNextCard(deck);
   },
