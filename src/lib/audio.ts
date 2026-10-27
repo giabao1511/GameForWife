@@ -224,6 +224,27 @@ import type { RealTimePeriod } from '@/data/types';
  * neutral ambience — the function is total over the union, not selective).
  * No-ops safely when the AudioContext is unavailable (jsdom, SSR).
  */
+// ── Avatar interaction SFX (poke / dizzy / head-pat) ──────────
+
+/** Cute high "ting" boing on a cheek poke. */
+export function playPokeTing(): void {
+  tone(1320, 0, 0.08, 'sine', 0.25, 1980);
+  tone(1980, 0.05, 0.09, 'sine', 0.18);
+}
+
+/** Comical descending wobble for the dizzy eyes. */
+export function playDizzyWobble(): void {
+  tone(660, 0, 0.18, 'triangle', 0.2, 220);
+  tone(440, 0.16, 0.2, 'triangle', 0.16, 110);
+}
+
+/** Soft warm purr-chord for a head pat. */
+export function playHeadPatChime(): void {
+  tone(523, 0, 0.18, 'sine', 0.22, 587);
+  tone(659, 0.08, 0.2, 'sine', 0.18, 784);
+  tone(784, 0.16, 0.26, 'sine', 0.14, 880);
+}
+
 export function playPeriodAmbience(period: RealTimePeriod): void {
   switch (period) {
     case 'morning':
