@@ -2,21 +2,27 @@
 
 import { motion } from 'framer-motion';
 import { useGameStore } from '@/store/useGameStore';
+import { useUiStore } from '@/store/useUiStore';
+import { getActivePeriod } from '@/lib/timeContext';
 import type { GameStats } from '@/data/types';
 
 /**
- * Stat-driven expression. Priority:
+ * Stat-driven expression, with a real-time ambience layer. Priority:
  * 1. Critical danger — any stat < 15 → pleading puppy eyes (shocked).
- * 2. Low energy — Pin < 25 → sleepy droopy eyes + floating "zzz".
- * 3. Low money — Ví tiền < 20 → dizzy sweat.
- * 4. High affection — Cưng chiều > 75 → heart eyes + blushed cheeks.
- * 5. Normal → cheerful.
+ *    (Overrides the latenight default: danger must always read first.)
+ * 2. Latenight ambience — the real period is latenight → sleepy droopy eyes
+ *    + floating "zzz" (a cute yawning default unless a stat says otherwise).
+ * 3. Low energy — Pin < 25 → sleepy droopy eyes + floating "zzz".
+ * 4. Low money — Ví tiền < 20 → dizzy sweat.
+ * 5. High affection — Cưng chiều > 75 → heart eyes + blushed cheeks.
+ * 6. Normal → cheerful.
  */
 type AvatarState = 'puppy' | 'sleepy' | 'broke' | 'love' | 'happy';
 
-function avatarState(stats: GameStats): AvatarState {
+function avatarState(stats: GameStats, period: string): AvatarState {
   const { energy, affection, wallet } = stats;
   if (energy < 15 || affection < 15 || wallet < 15 || stats.sanity < 15) return 'puppy';
+  if (period === 'latenight') return 'sleepy';
   if (energy < 25) return 'sleepy';
   if (wallet < 20) return 'broke';
   if (affection > 75) return 'love';
@@ -29,7 +35,10 @@ function avatarState(stats: GameStats): AvatarState {
  */
 export default function AvatarReaction({ className = '' }: { className?: string }) {
   const stats = useGameStore((s) => s.stats);
-  const state = avatarState(stats);
+  // Re-render when the dev override changes; getActivePeriod() applies it.
+  useUiStore((s) => s.devPeriodOverride);
+  const period = getActivePeriod();
+  const state = avatarState(stats, period);
 
   return (
     <motion.svg
