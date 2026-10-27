@@ -184,8 +184,17 @@ export interface GameStore {
    * intentionally NOT persisted (restarts reset it, so a new run gets it).
    */
   lateNightSpecialDrawn: boolean;
+  /** In-game day of the last granted head-pat reward (per-run cooldown). */
+  lastPettedDay: number;
 
   applyChoice: (direction: SwipeDirection) => void;
+  /**
+   * Head-pat reward: +1 Cưng chiều OR +1 Pin (50/50) at most once per
+   * in-game day. Returns the Vietnamese toast string when a reward was
+   * granted (and stores it in lastReaction so the card bubble shows it),
+   * or null on cooldown / finished runs (the visual reaction still plays).
+   */
+  petAvatar: () => string | null;
   useItem: (itemId: InventoryItemId) => void;
   setPreviewModifiers: (modifiers: StatModifiers | null, unknown?: boolean) => void;
   setTimeSlot: (slot: TimeSlot) => void;
@@ -259,6 +268,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   isScrapbookOpen: false,
   isVoucherWalletOpen: false,
   lateNightSpecialDrawn: false,
+  lastPettedDay: -1,
 
   applyChoice: (direction) => {
     const state = get();
@@ -361,6 +371,27 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (deathId && !state.unlockedDeathIds.includes(deathId)) {
       get().recordDeath(deathId);
     }
+  },
+
+  /**
+   * Head-pat reward with per-day cooldown. One random roll decides both
+   * the stat and the toast text so the bubble always matches what landed.
+   */
+  petAvatar: () => {
+    const state = get();
+    if (state.isGameOver || state.isVictory) return null;
+    if (state.day === state.lastPettedDay) return null; // per-day cooldown
+    const roll = Math.random();
+    const affectionReward = roll < 0.5;
+    const stats = applyModifiers(
+      state.stats,
+      affectionReward ? { affection: 1 } : { energy: 1 },
+    );
+    const toast = affectionReward
+      ? 'Được xoa đầu: +1 Cưng chiều ❤️'
+      : 'Được xoa đầu: +1 Pin ❤️';
+    set({ stats, lastPettedDay: state.day, lastReaction: toast });
+    return toast;
   },
 
   recordDeath: (deathId) => {
@@ -551,6 +582,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       unlockedMemoryIds: loadUnlockedMemories(),
       newlyUnlockedMemory: null,
       lateNightSpecialDrawn: false,
+      lastPettedDay: -1,
     });
     get().drawNextCard(deck);
   },
