@@ -5,6 +5,9 @@ export type ChapterId = 'CH1_DATING' | 'CH2_COHABITATION' | 'CH3_FUTURE';
 
 export type SwipeDirection = 'LEFT' | 'RIGHT' | 'UP';
 
+/** Real-world ambience period (see lib/timeContext.ts). */
+export type RealTimePeriod = 'morning' | 'afternoon' | 'evening' | 'latenight';
+
 export interface CardChoice {
   text: string;
   modifiers: StatModifiers;
@@ -52,6 +55,10 @@ export interface GameCard {
   upChoice?: UpChoice;
   /** Card-level chained narrative: the next card to serve after this one resolves. */
   nextCardId?: string;
+  /** Eligible for the real-time period draw boost (lib/timeContext). */
+  preferredPeriod?: RealTimePeriod;
+  /** Guaranteed when that real-time period is active and not yet drawn this session. */
+  exclusivePeriod?: RealTimePeriod;
 }
 
 export interface GameStats {

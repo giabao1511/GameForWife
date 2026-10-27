@@ -1,12 +1,13 @@
 import type { GameCard } from '../types';
 import { CHAPTER1_CARDS } from './chapter1';
+import { TIME_CARDS } from '../timeCards';
 
 /**
  * Phase 3 expansion: 11 more Chapter 1 scenarios — relatable daily-life
  * dilemmas, weekend date tension, plus chained dominoes (e.g. buying the
  * wrong tea leads straight to exchanging it in the rain).
  */
-const EXTRA_CARDS: GameCard[] = [
+export const EXTRA_CARDS: GameCard[] = [
   {
     id: 'ch1-afternoon-buy-wrong-tea',
     chapterId: 'CH1_DATING',
@@ -254,8 +255,8 @@ const EXTRA_CARDS: GameCard[] = [
   },
 ];
 
-/** Combined Chapter 1 deck (Phase 1 + Phase 3 expansion), 25+ cards. */
-export const CHAPTER1_ALL: GameCard[] = [...CHAPTER1_CARDS, ...EXTRA_CARDS];
+/** Combined Chapter 1 deck (Phase 1 + Phase 3 expansion + time cards). */
+export const CHAPTER1_ALL: GameCard[] = [...CHAPTER1_CARDS, ...EXTRA_CARDS, ...TIME_CARDS];
 
 export const CHAPTER1_ALL_MAP: Record<string, GameCard> = Object.fromEntries(
   CHAPTER1_ALL.map((c) => [c.id, c]),

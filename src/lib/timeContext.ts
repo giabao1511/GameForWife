@@ -7,9 +7,9 @@
  * on the hour: 11:00 / 17:00 / 23:00.
  */
 import { useUiStore } from '@/store/useUiStore';
-import type { TimeSlot } from '@/data/types';
+import type { RealTimePeriod, TimeSlot } from '@/data/types';
 
-export type RealTimePeriod = 'morning' | 'afternoon' | 'evening' | 'latenight';
+export type { RealTimePeriod } from '@/data/types';
 
 export const PERIODS: readonly RealTimePeriod[] = [
   'morning',
