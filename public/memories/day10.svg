@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Góc sofa thân quen">
+  <rect width="400" height="300" fill="#e9e0d2"/>
+  <!-- TV glow -->
+  <rect x="170" y="30" width="60" height="40" rx="6" fill="#4a3f35"/>
+  <rect x="178" y="38" width="44" height="24" fill="#c9e4ca" opacity="0.7"/>
+  <!-- sofa -->
+  <rect x="60" y="130" width="280" height="110" rx="28" fill="#c9a227"/>
+  <rect x="60" y="96" width="280" height="60" rx="24" fill="#d9b341"/>
+  <rect x="48" y="110" width="36" height="130" rx="16" fill="#b8912a"/>
+  <rect x="316" y="110" width="36" height="130" rx="16" fill="#b8912a"/>
+  <!-- two sleeping cat-people -->
+  <g transform="translate(130,148)">
+    <ellipse cx="0" cy="30" rx="46" ry="26" fill="#f6c6cf"/>
+    <circle cx="-14" cy="8" r="20" fill="#f6c6cf"/>
+    <path d="M-30 -6 l6 -16 10 12 z" fill="#f6c6cf"/>
+    <path d="M-4 -10 l8 -14 8 14 z" fill="#f6c6cf"/>
+    <path d="M-22 8 q6 6 12 0 M-4 8 q6 6 12 0" fill="none" stroke="#4a3f35" stroke-width="3" stroke-linecap="round"/>
+    <text x="-10" y="42" text-anchor="middle" font-size="13" fill="#4a3f35">z z</text>
+  </g>
+  <g transform="translate(268,152) scale(-1,1)">
+    <ellipse cx="0" cy="30" rx="46" ry="26" fill="#a8c6a1"/>
+    <circle cx="-14" cy="8" r="20" fill="#a8c6a1"/>
+    <path d="M-30 -6 l6 -16 10 12 z" fill="#a8c6a1"/>
+    <path d="M-4 -10 l8 -14 8 14 z" fill="#a8c6a1"/>
+    <path d="M-22 8 q6 6 12 0 M-4 8 q6 6 12 0" fill="none" stroke="#4a3f35" stroke-width="3" stroke-linecap="round"/>
+    <text x="-10" y="42" text-anchor="middle" font-size="13" fill="#4a3f35">z z z</text>
+  </g>
+  <!-- snack bowl -->
+  <path d="M182 210 h44 l-6 16 h-32 z" fill="#e5484d"/>
+  <circle cx="196" cy="206" r="5" fill="#f5a623"/>
+  <circle cx="208" cy="204" r="5" fill="#fdfbf7"/>
+  <text x="200" y="284" text-anchor="middle" font-family="Georgia, serif" font-size="15" font-style="italic" fill="#6b5a45">góc sofa thân quen, hai chú mèo con lăn ra ngủ</text>
+</svg>

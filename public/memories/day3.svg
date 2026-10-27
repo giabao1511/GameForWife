@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Quán cà phê quen">
+  <defs>
+    <linearGradient id="bg3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6e7cf"/>
+      <stop offset="1" stop-color="#e8cfa8"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#bg3)"/>
+  <!-- table -->
+  <ellipse cx="200" cy="235" rx="170" ry="46" fill="#b98a5a"/>
+  <ellipse cx="200" cy="228" rx="170" ry="46" fill="#d9a86c"/>
+  <!-- left cup (her boba) -->
+  <g transform="translate(105,120)">
+    <rect x="-34" y="0" width="68" height="88" rx="14" fill="#fdfbf7" stroke="#4a3f35" stroke-width="4"/>
+    <rect x="-34" y="0" width="68" height="22" rx="11" fill="#f6c6cf"/>
+    <circle cx="-10" cy="66" r="6" fill="#4a3f35"/>
+    <circle cx="12" cy="58" r="5" fill="#4a3f35"/>
+    <circle cx="0" cy="72" r="4" fill="#4a3f35"/>
+    <circle cx="18" cy="74" r="4" fill="#4a3f35"/>
+    <rect x="-2" y="-30" width="8" height="44" rx="4" fill="#e5484d"/>
+  </g>
+  <!-- right cup (his coffee) -->
+  <g transform="translate(295,128)">
+    <rect x="-30" y="0" width="60" height="74" rx="12" fill="#fdfbf7" stroke="#4a3f35" stroke-width="4"/>
+    <path d="M30 14 a20 20 0 0 1 0 44" fill="none" stroke="#4a3f35" stroke-width="4"/>
+    <ellipse cx="0" cy="4" rx="30" ry="8" fill="#8a5a33"/>
+  </g>
+  <!-- heart steam between the two -->
+  <path d="M200 88 c-10 -14 -30 -8 -30 8 c0 14 18 22 30 32 c12 -10 30 -18 30 -32 c0 -16 -20 -22 -30 -8 z" fill="#e5484d" opacity="0.85"/>
+  <text x="200" y="278" text-anchor="middle" font-family="Georgia, serif" font-size="15" font-style="italic" fill="#6b5a45">quán cà phê quen, buổi hẹn đầu tiên</text>
+</svg>

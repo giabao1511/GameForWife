@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Trong tim anh">
+  <defs>
+    <linearGradient id="bg14" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fdeee4"/>
+      <stop offset="1" stop-color="#f6c6cf"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#bg14)"/>
+  <!-- big heart -->
+  <path d="M200 118 c-24 -34 -76 -22 -76 16 c0 34 42 60 76 88 c34 -28 76 -54 76 -88 c0 -38 -52 -50 -76 -16 z" fill="#e5484d" opacity="0.9"/>
+  <!-- two silhouettes inside -->
+  <g transform="translate(166,148)" fill="#fdfbf7">
+    <circle cx="0" cy="0" r="13"/>
+    <path d="M-14 46 q14 -22 28 0 z"/>
+  </g>
+  <g transform="translate(214,144) scale(-1,1)" fill="#fdfbf7" opacity="0.9">
+    <circle cx="0" cy="0" r="11"/>
+    <path d="M-12 42 q12 -20 24 0 z"/>
+  </g>
+  <!-- tiny hearts -->
+  <g fill="#e5484d" opacity="0.6">
+    <path d="M80 70 c-5 -7 -14 -3 -14 4 c0 5 6 9 14 14 c8 -5 14 -9 14 -14 c0 -7 -9 -11 -14 -4 z"/>
+    <path d="M330 96 c-5 -7 -14 -3 -14 4 c0 5 6 9 14 14 c8 -5 14 -9 14 -14 c0 -7 -9 -11 -14 -4 z" transform="scale(0.8) translate(80,20)"/>
+  </g>
+  <text x="200" y="258" text-anchor="middle" font-family="Georgia, serif" font-size="17" font-style="italic" fill="#a03338">14 ngày bên nhau &amp; mãi mãi — trong tim anh</text>
+  <text x="200" y="282" text-anchor="middle" font-family="Georgia, serif" font-size="14" fill="#a03338" opacity="0.8">♥</text>
+</svg>

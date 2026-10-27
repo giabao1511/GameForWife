@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Bờ biển hoàng hôn">
+  <defs>
+    <linearGradient id="sky7" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f5b17a"/>
+      <stop offset="0.55" stop-color="#f7d4a0"/>
+      <stop offset="1" stop-color="#fbe9c9"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#sky7)"/>
+  <circle cx="200" cy="150" r="46" fill="#e5484d" opacity="0.9"/>
+  <!-- waves -->
+  <path d="M0 190 q50 -14 100 0 t100 0 t100 0 t100 0 V300 H0 Z" fill="#8fb8c9" opacity="0.75"/>
+  <path d="M0 214 q50 -12 100 0 t100 0 t100 0 t100 0 V300 H0 Z" fill="#5d8aa0" opacity="0.8"/>
+  <!-- two little silhouettes on a scooter crossing a bridge -->
+  <g transform="translate(52,150)">
+    <path d="M0 24 h86" stroke="#4a3f35" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <circle cx="8" cy="30" r="9" fill="#4a3f35"/>
+    <circle cx="78" cy="30" r="9" fill="#4a3f35"/>
+    <path d="M44 22 v-14 q0 -8 10 -8 h8" fill="none" stroke="#4a3f35" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="40" cy="-14" r="9" fill="#e5484d"/>
+    <circle cx="62" cy="-18" r="8" fill="#4a3f35"/>
+  </g>
+  <!-- rain ticks -->
+  <g stroke="#6b5a45" stroke-width="2" stroke-linecap="round" opacity="0.5">
+    <path d="M300 40 l-8 20"/><path d="M330 60 l-8 20"/><path d="M356 34 l-8 20"/>
+    <path d="M290 84 l-8 20"/><path d="M374 82 l-8 20"/>
+  </g>
+  <text x="200" y="288" text-anchor="middle" font-family="Georgia, serif" font-size="15" font-style="italic" fill="#6b4535">bờ biển hoàng hôn, dính mưa mà vẫn cười</text>
+</svg>

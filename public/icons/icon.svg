@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- rounded tile -->
+  <rect width="512" height="512" rx="97" fill="#fdfbf7"/>
+  <rect x="8" y="8" width="496" height="496" rx="92" fill="#fdfbf7"/>
+  <!-- face -->
+  <circle cx="256" cy="287" r="159" fill="#ffffff"/>
+  <!-- heart above face -->
+  <path d="M256 176 c -14 -26 -58 -24 -58 12 c 0 28 40 48 58 62 c 18 -14 58 -34 58 -62 c 0 -36 -44 -38 -58 -12 z"
+        fill="#f0a7a0"/>
+  <!-- eyes -->
+  <circle cx="200" cy="281" r="28" fill="#4a3f35"/>
+  <circle cx="312" cy="281" r="28" fill="#4a3f35"/>
+  <!-- blush -->
+  <circle cx="155" cy="329" r="31" fill="#f0a7a0" opacity="0.8"/>
+  <circle cx="357" cy="329" r="31" fill="#f0a7a0" opacity="0.8"/>
+</svg>

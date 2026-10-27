@@ -24,3 +24,18 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* PWA / mobile touch polish: kill iOS Safari's pull-to-refresh + rubber-banding
+   bounce when the draggable card reaches the top edge of the screen. The card
+   itself already sets `touch-none` so framer-motion owns the drag; this stops
+   the *page* from hijacking vertical overscroll. */
+html,
+body {
+  overscroll-behavior-y: none;
+}
+
+/* Let the standalone app's safe-area insets (notch / home bar) pad the game. */
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
