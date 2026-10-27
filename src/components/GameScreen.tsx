@@ -6,9 +6,10 @@ import TopHud from './hud/TopHud';
 import StatGroup from './hud/StatGroup';
 import CardDeck from './card/CardDeck';
 import InventoryBar from './inventory/InventoryBar';
-import { unlockAudio } from '@/lib/audio';
+import { unlockAudio, playPeriodAmbience } from '@/lib/audio';
 import { useGameStore } from '@/store/useGameStore';
 import { useUiStore } from '@/store/useUiStore';
+import { getActivePeriod } from '@/lib/timeContext';
 
 /** Top-level game layout for a chapter session. Card drawing lives in CardDeck. */
 export default function GameScreen() {
@@ -25,6 +26,10 @@ export default function GameScreen() {
   useEffect(() => {
     useGameStore.getState().hydrateFromStorage();
     useUiStore.getState().hydrateMuted();
+    // Real-time ambience flourish for the current period (morning chirps /
+    // latenight lullaby). No-ops silently when muted or before first gesture
+    // unlocks the AudioContext — it's atmosphere, not gameplay SFX.
+    playPeriodAmbience(getActivePeriod());
   }, []);
 
   return (

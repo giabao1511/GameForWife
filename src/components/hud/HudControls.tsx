@@ -7,8 +7,22 @@ import { MEMORIES_DATA } from '@/data/memories';
 import { VOUCHERS_DATA } from '@/data/vouchers';
 import { unlockAudio } from '@/lib/audio';
 import { cn } from '@/lib/cn';
+import {
+  PERIODS,
+  PERIOD_THEMES,
+  periodToTimeSlot,
+  type RealTimePeriod,
+} from '@/lib/timeContext';
 
-const IS_DEV = process.env.NODE_ENV === 'development';
+// Render the dev controls in every non-production environment (dev + test),
+// never in the shipped build.
+const IS_DEV = process.env.NODE_ENV !== 'production';
+
+/** Ambient-period dev override rows (icon + Vietnamese label) for the toggle. */
+const PERIOD_OPTIONS: Array<{ value: RealTimePeriod; label: string }> = PERIODS.map((p) => ({
+  value: p,
+  label: PERIOD_THEMES[p].label,
+}));
 
 /** Top-right controls: mute the ASMR engine, open the Voucher Wallet, open the
  * Death Gallery, open the Memories Scrapbook, and (dev only) instant victory. */
@@ -22,6 +36,9 @@ export default function HudControls() {
   const isVictory = useGameStore((s) => s.isVictory);
   const voucherWallet = useGameStore((s) => s.voucherWallet);
   const triggerInstantVictory = useGameStore((s) => s.triggerInstantVictory);
+  const setTimeSlot = useGameStore((s) => s.setTimeSlot);
+  const devPeriodOverride = useUiStore((s) => s.devPeriodOverride);
+  const setDevPeriodOverride = useUiStore((s) => s.setDevPeriodOverride);
   const muted = useUiStore((s) => s.muted);
   const setMutedState = useUiStore((s) => s.setMutedState);
 
@@ -86,15 +103,68 @@ export default function HudControls() {
       </div>
 
       {IS_DEV && (
-        <button
-          onClick={handleInstantVictory}
-          className="fixed bottom-4 right-4 z-50 flex items-center gap-1 rounded-lg border-2 border-dashed border-[#f5a623] bg-white p-1.5 text-[#f5a623] shadow-lg transition-colors hover:bg-[#fdfbf7]"
-          aria-label="Dev: nhảy thẳng tới màn hình chiến thắng"
-          title="Dev shortcut: xem màn hình Victory ngay"
-        >
-          <Zap className="h-4 w-4" />
-          <span className="text-xs font-bold">Victory</span>
-        </button>
+        <>
+          <button
+            onClick={handleInstantVictory}
+            className="fixed bottom-4 right-4 z-50 flex items-center gap-1 rounded-lg border-2 border-dashed border-[#f5a623] bg-white p-1.5 text-[#f5a623] shadow-lg transition-colors hover:bg-[#fdfbf7]"
+            aria-label="Dev: nhảy thẳng tới màn hình chiến thắng"
+            title="Dev shortcut: xem màn hình Victory ngay"
+          >
+            <Zap className="h-4 w-4" />
+            <span className="text-xs font-bold">Victory</span>
+          </button>
+
+          {/* Real-time ambience preview: toggle the active period to force all
+              four themes + deck draws at once. Picking a period also snaps
+              the in-game slot so the card pool matches the previewed theme.
+              "Auto" returns to the real clock. */}
+          <div
+            className="fixed bottom-4 left-4 z-50 flex items-center gap-1 rounded-lg border-2 border-dashed border-[#b9a8ff] bg-white p-1 shadow-lg"
+            role="group"
+            aria-label="Dev: xem trước bối cảnh theo giờ"
+          >
+            {PERIOD_OPTIONS.map(({ value, label }) => {
+              const active = devPeriodOverride === value;
+              return (
+                <button
+                  key={value}
+                  onClick={() => {
+                    unlockAudio();
+                    setDevPeriodOverride(value);
+                    // Match the deck pool to the previewed ambience.
+                    setTimeSlot(periodToTimeSlot(value));
+                  }}
+                  className={cn(
+                    'rounded px-1.5 py-1 text-sm transition-colors',
+                    active ? 'bg-[#4a3f35]' : 'bg-transparent',
+                  )}
+                  aria-pressed={active}
+                  aria-label={PERIOD_THEMES[value].icon}
+                  title={`Dev: xem ${label}`}
+                >
+                  {PERIOD_THEMES[value].icon}
+                </button>
+              );
+            })}
+            <button
+              onClick={() => {
+                unlockAudio();
+                setDevPeriodOverride(null);
+              }}
+              className={cn(
+                'rounded px-1.5 py-1 text-xs font-bold transition-colors',
+                devPeriodOverride === null
+                  ? 'bg-[#4a3f35] text-[#fdfbf7]'
+                  : 'bg-transparent text-[#4a3f35]/70',
+              )}
+              aria-pressed={devPeriodOverride === null}
+              aria-label="Auto"
+              title="Dev: theo giờ thật"
+            >
+              Auto
+            </button>
+          </div>
+        </>
       )}
     </>
   );

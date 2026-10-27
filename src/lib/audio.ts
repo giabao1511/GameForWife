@@ -213,3 +213,33 @@ export function playVictoryFanfare(): void {  // C5 G5 E5 G5 C6 G5 C6 — playfu
   tone(262, 0.0, 1.2, 'sine', 0.15);
   tone(392, 0.15, 1.2, 'sine', 0.12);
 }
+
+// ── Real-time ambience chimes (per period) ───────────────────
+import type { RealTimePeriod } from '@/data/types';
+
+/**
+ * A short ambient flourish on session start, matched to the real period.
+ * Morning = soft bright "bird-chirp" ascending pings; latenight = a slow,
+ * low, soothing lullaby chime; afternoon/evening stay silent (clean,
+ * neutral ambience — the function is total over the union, not selective).
+ * No-ops safely when the AudioContext is unavailable (jsdom, SSR).
+ */
+export function playPeriodAmbience(period: RealTimePeriod): void {
+  switch (period) {
+    case 'morning':
+      // Two soft, bright ascending chirps — like morning birds.
+      tone(1318, 0.0, 0.09, 'triangle', 0.12, 1760);
+      tone(1568, 0.14, 0.09, 'triangle', 0.12, 2093);
+      break;
+    case 'latenight':
+      // A slow, low, descending lullaby chime — soothing, sleepy.
+      tone(523, 0.0, 0.35, 'sine', 0.15, 494);
+      tone(392, 0.4, 0.35, 'sine', 0.13, 370);
+      tone(262, 0.8, 0.5, 'sine', 0.12, 220);
+      break;
+    case 'afternoon':
+    case 'evening':
+      // Clean, neutral ambience — nothing to play.
+      break;
+  }
+}
