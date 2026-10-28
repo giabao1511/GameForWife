@@ -114,7 +114,7 @@ export default function AvatarReaction({ className = '' }: { className?: string 
     samplesRef.current = [
       ...samplesRef.current.slice(-7),
       isSwipe
-        ? { x: 0, y: down.y, t: down.t, endX: down.x + dx, endY: svgY, endT: down.t + dt }
+        ? { x: down.x, y: down.y, t: down.t, endX: down.x + dx, endY: svgY, endT: down.t + dt }
         : { x: 0, y: down.y, t: down.t },
     ];
 

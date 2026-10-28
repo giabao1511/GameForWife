@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, cleanup, fireEvent, act } from '@testing-library/react';
+import { render, cleanup, fireEvent, act } from '@testing-library/react';
 import AvatarReaction from '@/components/card/AvatarReaction';
 import { useGameStore } from '@/store/useGameStore';
 import { haptic } from '@/lib/haptics';
@@ -107,6 +107,18 @@ describe('AvatarReaction interactivity', () => {
     fireEvent.pointerUp(svg, { clientY: 20, clientX: 60 });
     expect(audio.playHeadPatChime).toHaveBeenCalledTimes(1);
     expect(haptic.pop).toHaveBeenCalledTimes(1);
+    expect(useGameStore.getState().lastReaction).toContain('Được xoa đầu');
+  });
+
+  it('a leftward head-pat near the left screen edge still registers (the swipe DELTA, not the absolute end X, must gate the swipe)', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.4);
+    const { container } = render(<AvatarReaction />);
+    const svg = container.querySelector('svg')!;
+    // 50px leftward swipe ending below the 40px mark: the swipe length is
+    // what the spec gates on, not where the pointer happens to sit on screen.
+    fireEvent.pointerDown(svg, { clientY: 20, clientX: 30 });
+    fireEvent.pointerUp(svg, { clientY: 20, clientX: -20 });
+    expect(audio.playHeadPatChime).toHaveBeenCalledTimes(1);
     expect(useGameStore.getState().lastReaction).toContain('Được xoa đầu');
   });
 

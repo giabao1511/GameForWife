@@ -1,5 +1,6 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, cleanup, fireEvent } from '@testing-library/react';
+// eslint-disable-next-line
 import SwipeableCard from '@/components/card/SwipeableCard';
 import { useGameStore, defaultInventory } from '@/store/useGameStore';
 import * as audio from '@/lib/audio';
@@ -38,13 +39,16 @@ afterEach(() => {
 describe('avatar/card gesture isolation', () => {
   it('a pointerdown on the avatar never reaches the card drag element', () => {
     render(<SwipeableCard card={card} />);
-    const avatar = screen.getByRole('img')!.closest('[data-interactive-avatar]')!;
-    const dragEl = screen.getByRole('img')!.closest('[aria-label]')!; // the draggable card div
+    // The SVG itself carries aria-label, so the drag div must be resolved
+    // from the situation text (its own ancestor), never from the img.
+    const dragEl = screen.getByText(card.situation)!.closest('[aria-label]')!;
+    const svg = screen.getByRole('img')!;
+    expect(dragEl).not.toBe(svg); // guard: we are observing the card, not the avatar
     const spy = vi.fn();
-    // Bubble-phase listener on the card div: the avatar handler stops the
-    // event in capture, so neither capture nor bubble ever reaches here.
+    // Bubble-phase listener on the real draggable card div: the avatar's
+    // capture-phase stopPropagation kills the event before it reaches here.
     dragEl.addEventListener('pointerdown', spy);
-    fireEvent.pointerDown(avatar, { clientY: 30 });
+    fireEvent.pointerDown(svg, { clientY: 30 });
     expect(spy).not.toHaveBeenCalled();
     dragEl.removeEventListener('pointerdown', spy);
   });
