@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useGameStore } from '@/store/useGameStore';
 import { useActivePeriod } from '@/lib/timeContext';
-import { playPokeTing, playDizzyWobble, playHeadPatChime } from '@/lib/audio';
+import { playPokeTing, playDizzyWobble, playHeadPatChime, playVoicePat } from '@/lib/audio';
 import { haptic } from '@/lib/haptics';
 import { detectGestures, GESTURE, type PointerSample } from '@/lib/avatarGestures';
 import { cn } from '@/lib/cn';
@@ -45,6 +45,8 @@ const HAIR_ZONE_Y = 48;
 
 export default function AvatarReaction({ className = '' }: { className?: string }) {
   const stats = useGameStore((s) => s.stats);
+  const skin = useGameStore((s) => s.avatarSkin);
+  const military = skin === 'military';
   // Render-safe: deterministic first paint, then tracks the real clock; a
   // dev override repaints it immediately.
   const period = useActivePeriod();
@@ -52,6 +54,9 @@ export default function AvatarReaction({ className = '' }: { className?: string 
 
   const [reaction, setReaction] = useState<Reaction>(null);
   const reactionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const voiceBubbleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 20% of head-pats add a cute voice note + speech bubble ("Ngoan, thương em nhất!").
+  const [voiceBubble, setVoiceBubble] = useState(false);
 
   // Per-gesture history feeding the pure gesture engine.
   const samplesRef = useRef<PointerSample[]>([]);
@@ -135,6 +140,14 @@ export default function AvatarReaction({ className = '' }: { className?: string 
     } else {
       playHeadPatChime();
       haptic.pop();
+      // 20% of pats layer on a real voice-note reaction ("Ngoan, thương em nhất!")
+      // with a matching speech bubble; the remaining 80% stay the soft chime.
+      if (Math.random() < 0.2) {
+        void playVoicePat();
+        setVoiceBubble(true);
+        if (voiceBubbleTimer.current) clearTimeout(voiceBubbleTimer.current);
+        voiceBubbleTimer.current = setTimeout(() => setVoiceBubble(false), 2600);
+      }
       // Reward (if off cooldown) lands through the store → card bubble.
       useGameStore.getState().petAvatar();
       setReactionFor('pet', PET_MS);
@@ -177,8 +190,8 @@ export default function AvatarReaction({ className = '' }: { className?: string 
       >
         {/* back / body */}
         <g>
-          <path d="M24 88 Q24 70 48 70 Q72 70 72 88 Z" fill="#4a3f35" />
-          <path d="M28 84 Q28 72 48 72 Q68 72 68 84 Z" fill="#8c7b66" />
+          <path d="M24 88 Q24 70 48 70 Q72 70 72 88 Z" fill={military ? '#5c6e3f' : '#4a3f35'} />
+          <path d="M28 84 Q28 72 48 72 Q68 72 68 84 Z" fill={military ? '#77875a' : '#8c7b66'} />
           {/* head */}
           <circle cx={48} cy={44} r={24} fill="#f3d9c0" />
           {/* hair */}
@@ -186,6 +199,29 @@ export default function AvatarReaction({ className = '' }: { className?: string 
             d="M24 44 Q22 18 48 16 Q74 18 72 44 Q70 30 58 28 Q52 24 44 27 Q34 30 24 44 Z"
             fill="#3b2f28"
           />
+          {/* Military skin: olive uniform lapels (V-collar + buttons) + star badge. */}
+          {military && (
+            <g data-military-lapel>
+              <path d="M34 88 L48 72 L62 88 L56 88 L48 78 L40 88 Z" fill="#4a5a34" />
+              <path d="M48 74 L48 88" stroke="#4a5a34" strokeWidth={1.4} />
+              <circle cx={43} cy={86} r={1.3} fill="#d9c66a" />
+              <circle cx={53} cy={86} r={1.3} fill="#d9c66a" />
+            </g>
+          )}
+          {/* Military skin: boonie hat (nón tai bèo) with a red-gold star badge. */}
+          {military && (
+            <g data-military-hat>
+              <path d="M26 30 Q26 14 48 13 Q70 14 70 30 Q60 24 48 24 Q36 24 26 30 Z" fill="#5c6e3f" />
+              <path d="M22 30 Q22 25 48 24 Q74 25 74 30 Q64 35 48 35 Q32 35 22 30 Z" fill="#4a5a34" />
+              {/* red-and-gold star badge, front center of the dome */}
+              <path
+                d="M48 17.5 L49.4 21 L53 21.2 L50.2 23.4 L51.1 27 L48 25 L44.9 27 L45.8 23.4 L43 21.2 L46.6 21 Z"
+                fill="#e5484d"
+                stroke="#d9c66a"
+                strokeWidth={0.8}
+              />
+            </g>
+          )}
           {state === 'puppy' && <circle cx={48} cy={48} r={30} fill="#e5484d" opacity={0.1} />}
           {state === 'love' && <circle cx={48} cy={48} r={30} fill="#f6a5b8" opacity={0.25} />}
           {/* poke: bright blushing cheeks */}
@@ -315,6 +351,24 @@ export default function AvatarReaction({ className = '' }: { className?: string 
           </>
         )}
       </motion.svg>
+
+      {/* Cute voice-note bubble that appears on the 20% voice head-pat. */}
+      {voiceBubble && (
+        <motion.div
+          data-pet-voice-bubble
+          initial={{ opacity: 0, y: 10, scale: 0.85 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          className="absolute -top-12 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-2xl bg-white px-3 py-1.5 text-xs font-bold text-[#4a3f35] shadow-md ring-1 ring-[#f6c6cf]"
+          role="status"
+        >
+          Ngoan, thương em nhất! 💕
+          {/* Bubble tail */}
+          <span
+            aria-hidden
+            className="absolute -bottom-1 left-1/2 h-2.5 w-2.5 -translate-x-1/2 rotate-45 bg-white"
+          />
+        </motion.div>
+      )}
 
       {/* Floating hearts: 3 pink mini-hearts rise + fade during a head-pat. */}
       {pet &&

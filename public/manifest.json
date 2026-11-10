@@ -1,23 +1,29 @@
 {
-  "name": "Boyfriend Survival Simulator",
-  "short_name": "Nuôi Anh",
-  "description": "Giữ 4 chỉ số của anh ấy còn sống. Mất một, anh mất luôn.",
+  "name": "Nuôi Anh - Boyfriend Survival Simulator",
+  "short_name": "Nuôi Anh 💖",
+  "description": "Nhật ký sinh tồn & giữ gìn tình yêu",
   "id": "/",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#fdfbf7",
-  "theme_color": "#fdfbf7",
+  "background_color": "#fdf2f8",
+  "theme_color": "#fdf2f8",
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/apple-touch-icon.png",
+      "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"
     },

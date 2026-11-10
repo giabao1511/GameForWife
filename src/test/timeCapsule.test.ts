@@ -18,6 +18,7 @@ beforeEach(() => {
     readLetters: {},
     isTimeCapsuleOpen: false,
     selectedLetterId: null,
+    avatarSkin: 'civilian',
   });
 });
 
@@ -93,6 +94,30 @@ describe('time capsule store slice', () => {
     s().closeTimeCapsule();
     expect(s().isTimeCapsuleOpen).toBe(false);
     expect(s().selectedLetterId).toBe(null); // closing clears the reader
+  });
+
+  describe('avatar skin (military auto-switch)', () => {
+    it('starts on the civilian skin', () => {
+      expect(useGameStore.getState().avatarSkin).toBe('civilian');
+    });
+
+    it('opens in military and returns to civilian when the capsule closes', () => {
+      const s = () => useGameStore.getState();
+      s().openTimeCapsule();
+      expect(s().avatarSkin).toBe('military');
+      s().setSelectedLetter('letter_day_1');
+      expect(s().avatarSkin).toBe('military'); // the reader view keeps it
+      s().closeTimeCapsule();
+      expect(s().avatarSkin).toBe('civilian');
+    });
+
+    it('toggleAvatarSkin flips civilian ↔ military (star-badge easter egg)', () => {
+      const s = () => useGameStore.getState();
+      s().toggleAvatarSkin();
+      expect(s().avatarSkin).toBe('military');
+      s().toggleAvatarSkin();
+      expect(s().avatarSkin).toBe('civilian');
+    });
   });
 
   it('hydrateFromStorage loads the persisted read map and flips timeCapsuleHydrated', () => {

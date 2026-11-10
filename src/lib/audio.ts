@@ -40,6 +40,156 @@ export function setMuted(muted: boolean): void {
   if (master) {
     master.gain.value = muted ? SILENCE_GAIN : NORMAL_GAIN;
   }
+  // A looping BGM element is muted in place (keeps looping, resumes when unmuted).
+  if (bgm) bgm.muted = muted;
+  // The active theme bed is muted in place too.
+  if (themeBed) themeBed.muted = muted;
+}
+
+// ── Ambient BGM (public/audio/bgm-cozy.mp3) ────────────────────
+//
+// A gentle looping track that runs underneath the whole session. It is a
+// module-level HTMLAudioElement (kept out of the synth graph on purpose —
+// one persistent source that loops cleanly) started only on a real user
+// gesture, and driven by the same global mute as the rest of the audio.
+// Missing file / blocked autoplay degrade to silence, never to an error.
+const BGM_SRC = '/audio/bgm-cozy.mp3';
+const BGM_VOLUME = 0.2;
+
+let bgm: HTMLAudioElement | null = null;
+let bgmReady: Promise<HTMLAudioElement | null> | null = null;
+
+/**
+ * Load + start the looping background track at a gentle volume. Idempotent:
+ * a second call just resumes the already-loading element. Safe under
+ * browser autoplay policies and in test/SSR environments.
+ */
+export function startBgm(): void {
+  if (typeof window === 'undefined') return;
+  if (bgm && !bgm.paused) return;
+
+  if (!bgmReady) {
+    bgmReady = fetch(BGM_SRC, { cache: 'force-cache' })
+      .then((res) => {
+        if (!res.ok) {
+          bgmReady = null;
+          return null;
+        }
+        return res.blob();
+      })
+      .then(
+        (blob) => {
+          // jsdom and other minimal environments lack a real media engine —
+          // skip gracefully instead of throwing.
+          if (!blob || (!blob.type && blob.size === 0)) return null;
+          const element = new Audio(URL.createObjectURL(blob));
+          element.loop = true;
+          element.volume = BGM_VOLUME;
+          element.muted = useUiStore.getState().muted;
+          bgm = element;
+          return element;
+        },
+        () => {
+          bgmReady = null;
+          return null;
+        },
+      );
+  }
+
+  // If the element already exists, resume it now — otherwise arm it on load.
+  if (bgm) {
+    bgm.muted = useUiStore.getState().muted;
+    void bgm.play().catch(() => {}); // autoplay-policy edge case: stay silent.
+  } else {
+    void bgmReady.then((element) => {
+      if (element && !element.paused) return;
+      element?.play().catch(() => {});
+    });
+  }
+}
+
+/** Stop (and release) the background track. Safe to call any number of times. */
+export function stopBgm(): void {
+  if (bgm) {
+    bgm.pause();
+    bgm = null;
+  }
+}
+
+// ── Theme ambient bed (per-theme looping loop: rain / crickets) ───────
+//
+// A second, theme-scoped looping source kept strictly separate from bgm-cozy
+// so the active theme's ambience REPLACES the default cozy loop instead of
+// stacking two beds. Reuses the same fetch-based loader contract as startBgm
+// (missing file / blocked autoplay / jsdom degrade to silence, never error)
+// and honors the global mute exactly like the BGM.
+const THEME_BED_VOLUME = 0.25;
+let themeBed: HTMLAudioElement | null = null;
+let themeBedSrc: string | null = null;
+
+async function fetchAudioElement(url: string, volume: number): Promise<HTMLAudioElement | null> {
+  if (typeof window === 'undefined') return null;
+  try {
+    const res = await fetch(url, { cache: 'force-cache' });
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    // jsdom and other minimal environments lack a real media engine — skip
+    // gracefully instead of throwing (mirrors the BGM loader).
+    if (!blob || (!blob.type && blob.size === 0)) return null;
+    const element = new Audio(URL.createObjectURL(blob));
+    element.loop = true;
+    element.volume = volume;
+    element.muted = useUiStore.getState().muted;
+    return element;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Start the active theme's ambient bed, or — when the theme has none — fall
+ * back to the default cozy loop. Idempotent for a repeated call with the same
+ * source; crossfades are not needed (beds are short soft loops, a hard swap
+ * at low volume is inaudible).
+ */
+export function startThemeBed(src: string | null): void {
+  // Already on this bed — just re-assert playback + mute state and return.
+  if (themeBedSrc === src && themeBed) {
+    themeBed.muted = useUiStore.getState().muted;
+    void themeBed.play().catch(() => {});
+    return;
+  }
+  themeBedSrc = src;
+
+  // Release whatever bed was playing.
+  if (themeBed) {
+    themeBed.pause();
+    themeBed = null;
+  }
+
+  if (src) {
+    // A themed ambience owns the bed — stop the default cozy loop so two beds
+    // never play on top of each other.
+    stopBgm();
+    void fetchAudioElement(src, THEME_BED_VOLUME).then((element) => {
+      // Guard: the caller may have moved to a different bed while we fetched.
+      if (themeBedSrc !== src) return;
+      themeBed = element;
+      if (element) void element.play().catch(() => {}); // autoplay edge: stay silent.
+    });
+  } else {
+    // No themed bed (pastel / sunset) — resume the default cozy loop.
+    startBgm();
+  }
+}
+
+/** Release the theme bed (used on teardown / screen unmount). */
+export function stopThemeBed(): void {
+  if (themeBed) {
+    themeBed.pause();
+    themeBed = null;
+  }
+  themeBedSrc = null;
 }
 
 // ── Primitives ────────────────────────────────────────────────
@@ -183,6 +333,15 @@ export function playVoiceNote(url: string, fallback?: () => void): Promise<HTMLA
 /** Playful reaction clip for the Up ("Kệ anh") swipe. Falls back to the item pop. */
 export function playVoiceSwipeUp(): Promise<HTMLAudioElement | null> {
   return playVoiceNote('/audio/voice-swipe-up.mp3', () => playItemPop());
+}
+
+/**
+ * Sweet head-pat reaction clip. Called by AvatarReaction on the head-pat
+ * gesture (~20% of pats, decided by the caller) — the chime still plays in
+ * every case, so a voiceless install (or a skipped clip) stays complete.
+ */
+export function playVoicePat(): Promise<HTMLAudioElement | null> {
+  return playVoiceNote('/audio/voice-pat.mp3', () => playHeadPatChime());
 }
 
 /** Special anniversary message on Day-14 victory. Falls back to the fanfare. */

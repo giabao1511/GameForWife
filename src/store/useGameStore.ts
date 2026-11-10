@@ -22,6 +22,12 @@ import { haptic } from '@/lib/haptics';
 import { playVoiceVictory, playItemPop, playLetterChime, playHeartbeatChime } from '@/lib/audio';
 import { TIME_LATENIGHT_SPECIAL_ID } from '@/data/timeCards';
 import { getRandomComfortMessage } from '@/data/comfortMessages';
+import {
+  loadThemeConfig,
+  saveThemeConfig,
+  type AppTheme,
+  type AppThemeId,
+} from '@/data/themes';
 
 const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
 
@@ -33,6 +39,7 @@ export const VICTORY_DAY = 15;
 const LS_DEATHS_KEY = 'bf_sim_unlocked_deaths';
 const LS_VOUCHERS_KEY = 'bf_sim_redeemed_vouchers';
 const LS_MEMORIES_KEY = 'bf_sim_unlocked_memories';
+/** Theme preference (bf_sim_theme) is read/written by helpers in src/data/themes.ts. */
 /** Milestone Voucher Wallet state (distinct from the victory-only love vouchers). */
 const LS_WALLET_KEY = 'bf_sim_vouchers_state';
 /** Time Capsule read-letter state (military letters opened across real-world time). */
@@ -193,6 +200,13 @@ export function defaultInventory(): Record<InventoryItemId, InventoryItem> {
 
 export type GameScreenView = 'title' | 'playing' | 'how_to_play' | 'about';
 
+/**
+ * Cosmetic chibi outfit. 'civilian' is the default; 'military' (Áo lính &
+ * nón tai bèo) auto-equips while the Time Capsule mailbox is open and can be
+ * force-toggled from the star badge easter egg on the Title screen.
+ */
+export type AvatarSkin = 'civilian' | 'military';
+
 export interface GameStore {
   stats: GameStats;
   day: number;
@@ -256,6 +270,36 @@ export interface GameStore {
   isTimeCapsuleOpen: boolean;
   /** The letter currently open in the reader view, or null when none. */
   selectedLetterId: string | null;
+  /**
+   * Cosmetic chibi outfit. Opens in the Time Capsule mailbox / letter reader
+   * auto-equip 'military'; a manual toggle on the star badge forces the skin
+   * for viewing letters without re-opening the capsule.
+   */
+  avatarSkin: AvatarSkin;
+  /** Toggle the cosmetic skin (Title screen easter egg). */
+  toggleAvatarSkin: () => void;
+
+  // ── Theme & room customization ("Đổi Bối Cảnh & Chủ Đề") ────────
+  /**
+   * The player's manual theme pick (persisted under bf_sim_theme). This is the
+   * authoritative value when real-time sync is OFF.
+   */
+  appThemeId: AppThemeId;
+  /**
+   * "Đồng bộ theo thời gian thực": when true the wall clock picks the theme
+   * (pastel / sunset / starry_camp by hour) and the manual pick is parked.
+   */
+  themeSyncOn: boolean;
+  /** Theme & room-customization modal visibility. */
+  isThemeSelectorOpen: boolean;
+  /** Choose a theme manually (sets appThemeId + persists to bf_sim_theme). */
+  setAppTheme: (themeId: AppThemeId) => void;
+  /** Toggle real-time clock-driven theme switching (persists). */
+  setThemeSync: (on: boolean) => void;
+  /** Open the theme & room-customization modal. */
+  openThemeSelector: () => void;
+  /** Close the theme & room-customization modal. */
+  closeThemeSelector: () => void;
 
   // ── Gửi Nỗi Nhớ (digital hug / heartbeat) ────────────────────
   /** Total hugs sent to the camp (persisted under bf_sim_miss_count). */
@@ -404,6 +448,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
   readLetters: {},
   isTimeCapsuleOpen: false,
   selectedLetterId: null,
+  avatarSkin: 'civilian',
+  // Theme: deterministic default so SSR + first paint match; the persisted pick
+  // (and the sync toggle) is applied once, post-mount, by hydrateFromStorage().
+  appThemeId: 'pastel',
+  themeSyncOn: false,
+  isThemeSelectorOpen: false,
   // Gửi Nỗi Nhớ: the true counter is hydrated once, post-mount, by
   // hydrateFromStorage() — the SSR render must stay deterministic (0).
   missCount: 0,
@@ -626,8 +676,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
   openVoucherWallet: () => set({ isVoucherWalletOpen: true }),
   closeVoucherWallet: () => set({ isVoucherWalletOpen: false }),
 
-  openTimeCapsule: () => set({ isTimeCapsuleOpen: true }),
-  closeTimeCapsule: () => set({ isTimeCapsuleOpen: false, selectedLetterId: null }),
+  openTimeCapsule: () => set({ isTimeCapsuleOpen: true, avatarSkin: 'military' }),
+  closeTimeCapsule: () => set({ isTimeCapsuleOpen: false, selectedLetterId: null, avatarSkin: 'civilian' }),
+  toggleAvatarSkin: () => set((s) => ({ avatarSkin: s.avatarSkin === 'civilian' ? 'military' : 'civilian' })),
+
+  setAppTheme: (themeId) => {
+    set({ appThemeId: themeId });
+    saveThemeConfig({ theme: themeId, sync: get().themeSyncOn });
+  },
+
+  setThemeSync: (on) => {
+    set({ themeSyncOn: on });
+    saveThemeConfig({ theme: get().appThemeId, sync: on });
+  },
+
+  openThemeSelector: () => set({ isThemeSelectorOpen: true }),
+  closeThemeSelector: () => set({ isThemeSelectorOpen: false }),
 
   setSelectedLetter: (id) => set({ selectedLetterId: id }),
 
@@ -729,6 +793,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
       timeCapsuleHydrated: true,
       // Gửi Nỗi Nhớ: the persistent hug counter (SSR stays 0 until this).
       missCount: loadMissCount(),
+      // Theme preference (manual pick + real-time sync flag) from bf_sim_theme.
+      ...(() => {
+        const tc = loadThemeConfig();
+        return { appThemeId: tc.theme, themeSyncOn: tc.sync };
+      })(),
     });
     // The deterministic initial slot ('MORNING') may differ from the player's
     // actual clock — switch (and let CardDeck re-draw) only when it does.

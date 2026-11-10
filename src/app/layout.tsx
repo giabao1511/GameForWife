@@ -19,10 +19,12 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Nuôi Anh",
+    title: "Nuôi Anh 💖",
   },
   icons: {
-    apple: "/icons/icon-192x192.png",
+    // Dedicated 180px apple-touch-icon so iOS installs a crisp home-screen icon
+    // instead of upscaling the 192px PWA icon.
+    apple: "/icons/apple-touch-icon.png",
   },
 };
 
@@ -33,7 +35,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#fdfbf7",
+  themeColor: "#fdf2f8",
   viewportFit: "cover",
 };
 

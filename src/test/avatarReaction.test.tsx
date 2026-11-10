@@ -12,6 +12,7 @@ beforeEach(() => {
   vi.mocked(audio.playPokeTing).mockReset();
   vi.mocked(audio.playDizzyWobble).mockReset();
   vi.mocked(audio.playHeadPatChime).mockReset();
+  vi.mocked(audio.playVoicePat).mockReset();
   vi.mocked(haptic.thresholdTick).mockReset();
   vi.mocked(haptic.pop).mockReset();
   useGameStore.setState({
@@ -21,6 +22,7 @@ beforeEach(() => {
     day: 1,
     currentCard: null,
     lastReaction: null,
+    avatarSkin: 'civilian',
   } as never);
 });
 
@@ -182,5 +184,44 @@ describe('AvatarReaction interactivity', () => {
     fireEvent.pointerDown(svg, { clientY: 20, clientX: 0 });
     fireEvent.pointerUp(svg, { clientY: 20, clientX: 60 });
     expect(container.querySelectorAll('[data-pet-heart]')).toHaveLength(3);
+  });
+
+  describe('military skin', () => {
+    it('shows the boonie hat + olive lapel when avatarSkin is military', () => {
+      useGameStore.setState({ avatarSkin: 'military' } as never);
+      const { container } = render(<AvatarReaction />);
+      expect(container.querySelector('[data-military-hat]')).not.toBeNull();
+      expect(container.querySelector('[data-military-lapel]')).not.toBeNull();
+      useGameStore.setState({ avatarSkin: 'civilian' } as never);
+    });
+
+    it('hides the military outfit on the civilian skin', () => {
+      useGameStore.setState({ avatarSkin: 'civilian' } as never);
+      const { container } = render(<AvatarReaction />);
+      expect(container.querySelector('[data-military-hat]')).toBeNull();
+      expect(container.querySelector('[data-military-lapel]')).toBeNull();
+    });
+  });
+
+  describe('head-pat voice (20% roll)', () => {
+    it('rolls under 0.2: plays the pat voice + bubble', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.05);
+      const { container } = render(<AvatarReaction />);
+      const svg = container.querySelector('svg')!;
+      fireEvent.pointerDown(svg, { clientY: 20, clientX: 0 });
+      fireEvent.pointerUp(svg, { clientY: 20, clientX: 60 });
+      expect(audio.playVoicePat).toHaveBeenCalledTimes(1);
+      expect(container.querySelector('[data-pet-voice-bubble]')).not.toBeNull();
+    });
+
+    it('rolls at or over 0.2: skips the voice + bubble', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.5);
+      const { container } = render(<AvatarReaction />);
+      const svg = container.querySelector('svg')!;
+      fireEvent.pointerDown(svg, { clientY: 20, clientX: 0 });
+      fireEvent.pointerUp(svg, { clientY: 20, clientX: 60 });
+      expect(audio.playVoicePat).not.toHaveBeenCalled();
+      expect(container.querySelector('[data-pet-voice-bubble]')).toBeNull();
+    });
   });
 });

@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useGameStore } from '@/store/useGameStore';
 import GameScreen from '@/components/GameScreen';
@@ -8,6 +9,7 @@ import HowToPlayScreen from '@/components/screens/HowToPlayScreen';
 import AboutScreen from '@/components/screens/AboutScreen';
 import TimeCapsuleModal from '@/components/modals/TimeCapsuleModal';
 import SendMissModal from '@/components/modals/SendMissModal';
+import { unlockAudio, startBgm } from '@/lib/audio';
 
 /**
  * Top-level screen router. The whole app lives inside one mobile frame and
@@ -17,6 +19,19 @@ import SendMissModal from '@/components/modals/SendMissModal';
  */
 export default function Home() {
   const screen = useGameStore((s) => s.currentScreen);
+
+  // Browsers only start audio after a real user gesture. On the first tap
+  // anywhere we both unlock the ASMR synth and start the looping BGM. The
+  // gentle startBgm() is a no-op before this point and stays silent (rather
+  // than throwing) if autoplay is still blocked or the file is missing.
+  useEffect(() => {
+    const onFirstGesture = () => {
+      unlockAudio();
+      startBgm();
+    };
+    window.addEventListener('pointerdown', onFirstGesture, { once: true });
+    return () => window.removeEventListener('pointerdown', onFirstGesture);
+  }, []);
 
   return (
     <div className="flex min-h-dvh flex-col">

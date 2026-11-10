@@ -1,10 +1,26 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import ChibiFace from '@/components/card/ChibiFace';
+import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X } from 'lucide-react';
+import AvatarReaction from '@/components/card/AvatarReaction';
+import InstallGuideModal from '@/components/modals/InstallGuideModal';
 import AmbientBackground from './AmbientBackground';
 import { useGameStore } from '@/store/useGameStore';
+import { useActiveTheme } from '@/components/effects/useActiveTheme';
 import { cn } from '@/lib/cn';
+
+const INSTALL_DISMISS_KEY = 'bf_sim_install_guide_dismissed';
+
+/** True when the page runs as an installed PWA (no browser chrome). */
+function isStandalone() {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+  // iOS exposes no `display-mode` media query, so match its legacy alias too.
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.matchMedia('(-webkit-display-mode: standalone)').matches
+  );
+}
 
 /**
  * Title / Start screen — the first thing a player sees.
@@ -22,15 +38,55 @@ export default function TitleScreen() {
   const setScreen = useGameStore((s) => s.setScreen);
   const startGame = useGameStore((s) => s.startGame);
   const openTimeCapsule = useGameStore((s) => s.openTimeCapsule);
+  const avatarSkin = useGameStore((s) => s.avatarSkin);
+  const toggleAvatarSkin = useGameStore((s) => s.toggleAvatarSkin);
+  const openThemeSelector = useGameStore((s) => s.openThemeSelector);
+  const theme = useActiveTheme();
 
   const resume = turns > 0 && !isGameOver && !isVictory;
 
+  // --- Install (A2HS) guide ---
+  // A gentle, dismissible banner nags the user to "add to home screen" until
+  // they tap it (opens the guide sheet) or the app is already running
+  // standalone. Dismissal persists so it doesn't re-nag after a reload.
+  // Standalone is only trusted post-mount so the server/client first paint
+  // matches (the installed-PWA case drops the banner/menu button afterwards).
+  const [installGuideOpen, setInstallGuideOpen] = useState(false);
+  const [showInstallBanner, setShowInstallBanner] = useState(true);
+  const [inStandalone, setInStandalone] = useState(false);
+
+  useEffect(() => {
+    const standalone = isStandalone();
+    setInStandalone(standalone);
+    if (standalone) {
+      // Already the home-screen app — no install nudge needed at all.
+      setShowInstallBanner(false);
+      return;
+    }
+    let dismissed = false;
+    try {
+      dismissed = window.localStorage.getItem(INSTALL_DISMISS_KEY) === '1';
+    } catch {
+      /* ignore — private mode etc. */
+    }
+    if (dismissed) setShowInstallBanner(false);
+  }, []);
+
+  const dismissInstallBanner = () => {
+    setShowInstallBanner(false);
+    try {
+      window.localStorage.setItem(INSTALL_DISMISS_KEY, '1');
+    } catch {
+      /* ignore */
+    }
+  };
+
   return (
-    <div className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col overflow-hidden bg-[#fff4f6] p-5 text-[#4a3f35]">
+    <div className={`relative mx-auto flex min-h-dvh w-full max-w-md flex-col overflow-hidden p-5 ${theme.textColor}`}>
       <AmbientBackground />
 
       <div className="relative z-10 flex flex-1 flex-col items-center justify-center py-6">
-        {/* Breathing chibi with a tiny military cap + heart */}
+        {/* Breathing chibi + military star-badge easter egg (tap to toggle skin) */}
         <div className="relative mb-4">
           <motion.div
             animate={{ y: [0, -8, 0] }}
@@ -38,11 +94,22 @@ export default function TitleScreen() {
             className="relative"
           >
             <div className="grid h-36 w-36 place-items-center rounded-full bg-white/60 shadow-[0_18px_50px_-12px_rgba(229,72,77,0.35)]">
-              <ChibiFace state="happy" size={120} />
+              <AvatarReaction />
             </div>
-            <span className="absolute -right-1 -top-1 text-3xl" aria-hidden>
-              🎖️
-            </span>
+            <motion.button
+              data-skin-toggle
+              type="button"
+              onClick={toggleAvatarSkin}
+              whileTap={{ scale: 0.9 }}
+              className="absolute -right-1 -top-1 text-3xl"
+              aria-pressed={avatarSkin === 'military'}
+              aria-label={
+                avatarSkin === 'military' ? 'Bỏ trang phục lính' : 'Đội trang phục lính'
+              }
+              title="Easter egg: tap để đổi áo lính 🎖️"
+            >
+              {avatarSkin === 'military' ? '⭐' : '🎖️'}
+            </motion.button>
             <motion.span
               className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-2xl"
               animate={{ scale: [1, 1.25, 1] }}
@@ -61,6 +128,41 @@ export default function TitleScreen() {
         <p className="mt-1 text-center text-sm font-medium text-[#4a3f35]/70">
           Nhật ký sinh tồn &amp; giữ gìn tình yêu 💖
         </p>
+
+        {/* Gentle, dismissible "add to home screen" prompt (browser only) */}
+        <AnimatePresence>
+          {showInstallBanner && (
+            <motion.button
+              type="button"
+              data-install-banner
+              onClick={() => setInstallGuideOpen(true)}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              className="mt-4 flex w-full items-center justify-between gap-2 rounded-2xl border-2 border-dashed border-[#f0b9c4] bg-white/70 px-4 py-2.5 text-left shadow-sm"
+            >
+              <span className="text-xs font-bold leading-snug text-[#4a3f35]">
+                📲 <span className="text-[#e5484d]">Cài đặt app lên điện thoại</span>
+                <span className="block text-[11px] font-medium text-[#4a3f35]/60">
+                  Chạy full-screen, không có thanh trình duyệt
+                </span>
+              </span>
+              <span
+                data-install-banner-close
+                role="button"
+                aria-label="Ẩn hướng dẫn cài đặt"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  dismissInstallBanner();
+                }}
+                className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/80 text-[#4a3f35]/60 transition-transform active:scale-90"
+              >
+                <X className="h-4 w-4" />
+              </span>
+            </motion.button>
+          )}
+        </AnimatePresence>
 
         {/* Menu buttons */}
         <div className="mt-7 flex w-full flex-col items-stretch gap-3">
@@ -104,6 +206,16 @@ export default function TitleScreen() {
           >
             Hộp thư thời gian 🎖️
           </button>
+
+          {!inStandalone && (
+            <button
+              onClick={() => setInstallGuideOpen(true)}
+              data-install-menu-button
+              className="w-full rounded-2xl border-2 border-[#f0d9cc] bg-white/80 px-5 py-3 text-sm font-bold text-[#4a3f35] shadow-sm transition-transform active:scale-[0.98]"
+            >
+              Cài đặt app 📲
+            </button>
+          )}
         </div>
       </div>
 
@@ -111,6 +223,13 @@ export default function TitleScreen() {
       <p className="relative z-10 pb-2 text-center text-[11px] font-medium text-[#4a3f35]/50">
         v1.0.0 · Made with all my love ❤️
       </p>
+
+      {/* PWA install guide — bottom sheet, opened from the banner or menu button */}
+      <InstallGuideModal
+        open={installGuideOpen}
+        onClose={() => setInstallGuideOpen(false)}
+        onInstalled={dismissInstallBanner}
+      />
     </div>
   );
 }

@@ -6,6 +6,8 @@ import { useGameStore } from '@/store/useGameStore';
 import { playSwipeWhoosh, playVoiceSwipeUp } from '@/lib/audio';
 import { haptic } from '@/lib/haptics';
 import type { GameCard } from '@/data/types';
+import { useActiveTheme } from '@/components/effects/useActiveTheme';
+import { cn } from '@/lib/cn';
 import AvatarReaction from './AvatarReaction';
 
 const H_DRAG_THRESHOLD = 100;
@@ -30,6 +32,7 @@ const MOOD: Record<GameCard['avatarMood'], { emoji: string; label: string }> = {
 export default function SwipeableCard({ card }: { card: GameCard }) {
   const applyChoice = useGameStore((s) => s.applyChoice);
   const setPreviewModifiers = useGameStore((s) => s.setPreviewModifiers);
+  const theme = useActiveTheme();
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -121,17 +124,17 @@ export default function SwipeableCard({ card }: { card: GameCard }) {
           className="relative min-h-[460px] w-full cursor-grab touch-none select-none sm:min-h-[460px] active:cursor-grabbing"
           aria-label={card.situation}
         >
-          <div className="flex h-full flex-col rounded-3xl border border-[#e8dfd5] bg-white p-6 shadow-md">
+          <div className={cn('flex h-full flex-col rounded-3xl p-6 shadow-md', 'border', theme.cardBg, theme.cardText)}>
             {/* Avatar: prominent, centered near the top */}
             <div className="mb-4 flex flex-col items-center gap-2">
               <AvatarReaction className="shrink-0" />
-              <span className="rounded-full bg-[#f4efe6] px-3 py-1 text-xs font-semibold text-[#4a3f35]">
+              <span className={cn('rounded-full px-3 py-1 text-xs font-semibold', 'bg-black/10')}>
                 {mood.emoji} {mood.label}
               </span>
             </div>
 
             {/* Situation: clear, readable, centered in the card body */}
-            <p className="flex-1 py-4 text-center text-xl font-semibold leading-relaxed text-[#4a3f35]">
+            <p className="flex-1 py-4 text-center text-xl font-semibold leading-relaxed">
               {card.situation}
             </p>
           </div>

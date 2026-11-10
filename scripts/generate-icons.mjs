@@ -158,3 +158,7 @@ for (const size of [192, 512]) {
   writeFileSync(join(root, `public/icons/icon-${size}x${size}.png`), encodePng(size, paintIcon(size)));
   console.log(`wrote public/icons/icon-${size}x${size}.png`);
 }
+// Apple touch icon: dedicated 180px file so iOS doesn't upscale the 192px PWA
+// icon for the home-screen (and A2HS) install.
+writeFileSync(join(root, 'public/icons/apple-touch-icon.png'), encodePng(180, paintIcon(180)));
+console.log('wrote public/icons/apple-touch-icon.png');
