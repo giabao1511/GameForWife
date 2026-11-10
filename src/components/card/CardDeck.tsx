@@ -6,6 +6,7 @@ import { useGameStore } from '@/store/useGameStore';
 import { CHAPTER1_ALL } from '@/data/cards/chapter1Extra';
 import SwipeableCard from './SwipeableCard';
 import GameOverModal from '../modals/GameOverModal';
+import EmergencyRevivalModal from '../modals/EmergencyRevivalModal';
 import VictoryModal from '../modals/VictoryModal';
 import DeathGalleryModal from '../modals/DeathGalleryModal';
 import ScrapbookModal from '../modals/ScrapbookModal';
@@ -79,6 +80,7 @@ export default function CardDeck() {
       </AnimatePresence>
 
       <GameOverModal />
+      <EmergencyRevivalModal />
       <VictoryModal />
       <DeathGalleryModal />
       <ScrapbookModal />

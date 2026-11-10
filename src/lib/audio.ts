@@ -197,6 +197,26 @@ export function playMemoryTingle(): void {
   tone(1047, 0.24, 0.22, 'sine', 0.15);
 }
 
+/**
+ * Soft two-note chime when a Time Capsule letter is opened (the envelope
+ * "wax-seal" breaking). Warmer and slower than the memory tingle — a
+ * keepsake, not a game reward.
+ */
+export function playLetterChime(): void {
+  tone(659, 0, 0.22, 'sine', 0.22, 784);
+  tone(784, 0.16, 0.3, 'sine', 0.16, 988);
+}
+
+/**
+ * Soft, tender two-note "lub-dub" chime that matches the heartbeat haptic
+ * when a miss-signal hug is sent. Softer and slower than any reward — it is
+ * comfort, not gameplay.
+ */
+export function playHeartbeatChime(): void {
+  tone(523, 0, 0.18, 'sine', 0.18, 659);
+  tone(659, 0.2, 0.28, 'sine', 0.14, 880);
+}
+
 /** Warm celebratory brass-like victory arpeggio. */
 export function playVictoryFanfare(): void {  // C5 G5 E5 G5 C6 G5 C6 — playful rising brass
   const notes: Array<[number, number, OscillatorType]> = [
@@ -263,4 +283,49 @@ export function playPeriodAmbience(period: RealTimePeriod): void {
       // Clean, neutral ambience — nothing to play.
       break;
   }
+}
+
+// ── Emergency Revival (Defibrillator CPR) SFX + loops ─────────
+
+/** Sharp defibrillator discharge: crackle of noise + fast downward power slide. */
+export function playDefibZap(): void {
+  noiseSweep(0, 0.14, 0.4);
+  tone(1900, 0, 0.22, 'sawtooth', 0.3, 140);
+  tone(320, 0.05, 0.2, 'square', 0.12, 80);
+}
+
+/** Harsh error buzz when a shock lands outside the sweet spot. */
+export function playErrorBuzz(): void {
+  tone(150, 0, 0.24, 'square', 0.25);
+  tone(110, 0.04, 0.26, 'square', 0.16);
+}
+
+/** Tragic continuous flatline tone (≈3s) — the monitor giving up. */
+export function playFlatline(): void {
+  tone(880, 0, 2.9, 'sine', 0.22);
+}
+
+/** Dramatic gasp / sigh of life: a quick low-to-high whoosh on two layers. */
+export function playReviveGasp(): void {
+  noiseSweep(0, 0.5, 0.28);
+  tone(240, 0, 0.45, 'sine', 0.16, 720);
+}
+
+/** Two-note emergency siren wail (880/660) on a repeating loop. */
+export function startSirenLoop(): number {
+  if (typeof window === 'undefined') return 0;
+  const interval = window.setInterval(() => {
+    tone(880, 0, 0.35, 'triangle', 0.16, 660);
+    tone(660, 0.4, 0.35, 'triangle', 0.12, 880);
+  }, 1000);
+  return interval;
+}
+
+/** Fast beeping ECG-monitor tone (1.2kHz) on a 550ms loop — the monitor in panic. */
+export function startEcgBeepLoop(): number {
+  if (typeof window === 'undefined') return 0;
+  const interval = window.setInterval(() => {
+    tone(1200, 0, 0.07, 'square', 0.12);
+  }, 550);
+  return interval;
 }

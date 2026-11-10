@@ -18,4 +18,14 @@ export const haptic = {
   pop: () => vibrate(30),
   /** Double pulse for the danger zone (a stat dropping below 20) or Game Over. */
   dangerPulse: () => vibrate([20, 50, 20]),
+  /** Heavy single thud for a successful defibrillator shock. */
+  shockTick: () => vibrate(60),
+  /** Stuttering triple-pulse for a missed shock (error buzz). */
+  errorThud: () => vibrate([18, 24, 18]),
+  /**
+   * Realistic "lub-dub" heartbeat for the Send-a-Miss long-press: a double
+   * pulse (70ms tick, 100ms rest, 120ms tick) so a phone in her hand
+   * literally beats like his heart.
+   */
+  heartbeatPulse: () => vibrate([70, 100, 120]),
 };

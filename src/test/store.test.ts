@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { useGameStore } from '@/store/useGameStore';
+import { useGameStore, loadMissCount } from '@/store/useGameStore';
 import { CHAPTER1_CARDS } from '@/data/cards/chapter1';
+import { COMFORT_MESSAGES } from '@/data/comfortMessages';
 import type { GameCard } from '@/data/types';
 
 function card(id: string, timeSlot: GameCard['timeSlot'] = 'MORNING', mods: Partial<GameCard['leftChoice']['modifiers']> = {}): GameCard {
@@ -18,6 +19,7 @@ function resetStore(overrides: Partial<ReturnType<typeof useGameStore.getState>>
   useGameStore.setState({
     stats: { energy: 50, affection: 50, sanity: 50, wallet: 50 },
     day: 1,
+    currentScreen: 'title',
     turns: 0,
     activeChapter: 'CH1_DATING',
     activeTimeSlot: 'MORNING',
@@ -27,6 +29,12 @@ function resetStore(overrides: Partial<ReturnType<typeof useGameStore.getState>>
     recentCardIds: [],
     previewModifiers: null,
     lastReaction: null,
+    hasUsedRevival: false,
+    isRevivalActive: false,
+    pendingDeathStat: null,
+    missCount: 0,
+    lastComfortMessage: null,
+    isSendMissOpen: false,
     ...overrides,
   });
 }
@@ -47,8 +55,23 @@ describe('stats clamping', () => {
 });
 
 describe('game over trigger', () => {
-  it('sets isGameOver and gameOverCause when a stat hits 0', () => {
+  it('intercepts the first death with the Emergency Revival instead of instant game over', () => {
     resetStore({
+      stats: { energy: 10, affection: 50, sanity: 50, wallet: 50 },
+      currentCard: card('c1', 'MORNING', { energy: -10 }),
+    });
+    useGameStore.getState().applyChoice('LEFT');
+    const s = useGameStore.getState();
+    expect(s.isGameOver).toBe(false);
+    expect(s.isRevivalActive).toBe(true);
+    expect(s.pendingDeathStat).toBe('energy');
+    expect(s.gameOverCause).toBeNull();
+    expect(s.currentCard).toBeNull();
+  });
+
+  it('falls through to standard game over when the revival is already spent', () => {
+    resetStore({
+      hasUsedRevival: true,
       stats: { energy: 10, affection: 50, sanity: 50, wallet: 50 },
       currentCard: card('c1', 'MORNING', { energy: -10 }),
     });
@@ -191,5 +214,112 @@ describe('previewModifiers', () => {
     useGameStore.getState().applyChoice('LEFT');
     expect(useGameStore.getState().previewModifiers).toBeNull();
     expect(useGameStore.getState().lastReaction).toBe('reaction L');
+  });
+});
+
+describe('Gửi Nỗi Nhớ (digital hug)', () => {
+  const LS_MISS_KEY = 'bf_sim_miss_count';
+
+  beforeEach(() => {
+    localStorage.removeItem(LS_MISS_KEY);
+  });
+
+  it('increments the counter and persists it to localStorage', () => {
+    const msg = useGameStore.getState().sendMissSignal();
+    const s = useGameStore.getState();
+    expect(s.missCount).toBe(1);
+    expect(msg).toBe(s.lastComfortMessage);
+    expect(msg).toBeTypeOf('string');
+    expect(msg.length).toBeGreaterThan(0);
+    expect(loadMissCount()).toBe(1);
+  });
+
+  it('returns a message that is always one of the known comfort lines', () => {
+    const msg = useGameStore.getState().sendMissSignal();
+    expect(COMFORT_MESSAGES).toContain(msg);
+  });
+
+  it('never repeats the same message back-to-back', () => {
+    useGameStore.setState({ missCount: 0, lastComfortMessage: null });
+    const first = useGameStore.getState().sendMissSignal();
+    // Force the same line to be picked again by seeding it as "last".
+    useGameStore.setState({ lastComfortMessage: first });
+    const second = useGameStore.getState().sendMissSignal();
+    expect(second).not.toBe(first);
+  });
+
+  it('openSendMiss / closeSendMiss toggle the widget visibility', () => {
+    expect(useGameStore.getState().isSendMissOpen).toBe(false);
+    useGameStore.getState().openSendMiss();
+    expect(useGameStore.getState().isSendMissOpen).toBe(true);
+    useGameStore.getState().closeSendMiss();
+    expect(useGameStore.getState().isSendMissOpen).toBe(false);
+  });
+
+  it('hydrateFromStorage reads the persisted hug count back into the store', () => {
+    localStorage.setItem(LS_MISS_KEY, '7');
+    useGameStore.setState({ missCount: 0 });
+    useGameStore.getState().hydrateFromStorage();
+    expect(useGameStore.getState().missCount).toBe(7);
+  });
+});
+
+describe('Title / Menu navigation', () => {
+  it('starts on the title screen by default', () => {
+    expect(useGameStore.getState().currentScreen).toBe('title');
+  });
+
+  it('startGame begins a fresh Day 1 run when none is in progress', () => {
+    resetStore({ currentCard: null, turns: 0, isGameOver: false, isVictory: false });
+    useGameStore.getState().startGame();
+    const s = useGameStore.getState();
+    expect(s.currentScreen).toBe('playing');
+    expect(s.day).toBe(1);
+    expect(s.turns).toBe(0);
+  });
+
+  it('startGame resumes an ongoing run instead of resetting it', () => {
+    resetStore({
+      currentCard: null,
+      turns: 5,
+      day: 3,
+      isGameOver: false,
+      isVictory: false,
+      stats: { energy: 10, affection: 90, sanity: 40, wallet: 70 },
+    });
+    useGameStore.getState().startGame();
+    const s = useGameStore.getState();
+    expect(s.currentScreen).toBe('playing');
+    expect(s.day).toBe(3);
+    expect(s.turns).toBe(5);
+    expect(s.stats.energy).toBe(10);
+  });
+
+  it('startGame resets a finished run to a fresh Day 1 before entering play', () => {
+    resetStore({ turns: 44, day: 15, isVictory: true, isGameOver: false });
+    useGameStore.getState().startGame();
+    const s = useGameStore.getState();
+    expect(s.currentScreen).toBe('playing');
+    expect(s.day).toBe(1);
+    expect(s.turns).toBe(0);
+    expect(s.isVictory).toBe(false);
+  });
+
+  it('returnToTitle goes back to the menu and keeps the run', () => {
+    resetStore({ turns: 5, day: 3, currentScreen: 'playing' });
+    useGameStore.getState().returnToTitle();
+    const s = useGameStore.getState();
+    expect(s.currentScreen).toBe('title');
+    expect(s.day).toBe(3);
+    expect(s.turns).toBe(5);
+  });
+
+  it('setScreen navigates to sub-screens', () => {
+    useGameStore.getState().setScreen('how_to_play');
+    expect(useGameStore.getState().currentScreen).toBe('how_to_play');
+    useGameStore.getState().setScreen('about');
+    expect(useGameStore.getState().currentScreen).toBe('about');
+    useGameStore.getState().returnToTitle();
+    expect(useGameStore.getState().currentScreen).toBe('title');
   });
 });

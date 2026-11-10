@@ -13,13 +13,24 @@ export default function TopHud() {
   const chapter = useGameStore((s) => s.activeChapter);
   const slot = useGameStore((s) => s.activeTimeSlot);
   const setTimeSlot = useGameStore((s) => s.setTimeSlot);
+  const returnToTitle = useGameStore((s) => s.returnToTitle);
 
   return (
     <header className="flex flex-col gap-1.5">
-      <div className="flex items-center justify-between">
-        <span className="whitespace-nowrap shrink-0 text-lg font-bold tracking-tight">Ngày {day}</span>
-        <div className="flex items-center gap-1 shrink-0">
-          <span className="whitespace-nowrap shrink-0 rounded-full bg-[#efe8dd] px-3 py-1 text-xs font-semibold">
+      <div className="flex flex-wrap items-center justify-between gap-x-1 gap-y-1">
+        <div className="flex items-center gap-2">
+          <span className="whitespace-nowrap shrink-0 text-lg font-bold tracking-tight">Ngày {day}</span>
+          <button
+            onClick={returnToTitle}
+            className="grid h-7 w-7 place-items-center rounded-lg border border-[#e3d9c9] bg-white text-[15px] font-bold text-[#4a3f35] shadow-sm transition-transform hover:bg-[#fdfbf7] active:scale-90"
+            aria-label="Về màn hình chính"
+            title="🏠 Về menu chính (tiến độ được giữ)"
+          >
+            🏠
+          </button>
+        </div>
+        <div className="flex flex-wrap items-center gap-1">
+          <span className="max-w-[72px] truncate rounded-full bg-[#efe8dd] px-2.5 py-1 text-xs font-semibold">
             {chapterLabel(chapter)}
           </span>
           <HudControls />

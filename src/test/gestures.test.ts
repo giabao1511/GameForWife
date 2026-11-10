@@ -33,6 +33,9 @@ function resetStore(overrides: Partial<ReturnType<typeof useGameStore.getState>>
     inventory: defaultInventory(),
     activeShield: false,
     nextChainedCardId: null,
+    hasUsedRevival: false,
+    isRevivalActive: false,
+    pendingDeathStat: null,
     ...overrides,
   } as never);
 }
@@ -93,8 +96,26 @@ describe('applyChoice("UP")', () => {
     expect(s.activeShield).toBe(false);
   });
 
-  it('triggers game over when an outcome zeroes a stat', () => {
+  it('intercepts the first death with the Emergency Revival (no instant game over)', () => {
     resetStore({
+      stats: { energy: 15, affection: 50, sanity: 50, wallet: 50 },
+      currentCard: card('c1', {
+        upChoice: {
+          text: 'Kệ',
+          possibleOutcomes: [{ weight: 1, modifiers: { energy: -20 }, narrativeReaction: 'boom' }],
+        },
+      }),
+    });
+    useGameStore.getState().applyChoice('UP');
+    const s = useGameStore.getState();
+    expect(s.isGameOver).toBe(false);
+    expect(s.isRevivalActive).toBe(true);
+    expect(s.pendingDeathStat).toBe('energy');
+  });
+
+  it('triggers standard game over when a stat zeroes and revival is already spent', () => {
+    resetStore({
+      hasUsedRevival: true,
       stats: { energy: 15, affection: 50, sanity: 50, wallet: 50 },
       currentCard: card('c1', {
         upChoice: {

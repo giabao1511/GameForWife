@@ -1,10 +1,13 @@
 'use client';
 
-import { BookOpen, Camera, Ticket, Volume2, VolumeX, Zap } from 'lucide-react';
+import { BookOpen, Camera, Mail, Ticket, Volume2, VolumeX, Zap } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useGameStore } from '@/store/useGameStore';
 import { useUiStore } from '@/store/useUiStore';
 import { MEMORIES_DATA } from '@/data/memories';
 import { VOUCHERS_DATA } from '@/data/vouchers';
+import { TIME_CAPSULE_LETTERS } from '@/data/militaryLetters';
+import { isLetterUnlocked } from '@/lib/militaryTime';
 import { unlockAudio } from '@/lib/audio';
 import { cn } from '@/lib/cn';
 import {
@@ -31,6 +34,15 @@ export default function HudControls() {
   const unlockedDeathIds = useGameStore((s) => s.unlockedDeathIds);
   const openScrapbook = useGameStore((s) => s.openScrapbook);
   const unlockedMemoryIds = useGameStore((s) => s.unlockedMemoryIds);
+  const openTimeCapsule = useGameStore((s) => s.openTimeCapsule);
+  const timeCapsuleHydrated = useGameStore((s) => s.timeCapsuleHydrated);
+  const readLetters = useGameStore((s) => s.readLetters);
+  // Unread fresh letters: unlocked by the real clock but not yet read. Gated
+  // on hydration so the badge (and isLetterUnlocked's new Date()) is only
+  // evaluated after mount — the first SSR/HTML paint shows no badge.
+  const freshLetters = timeCapsuleHydrated
+    ? TIME_CAPSULE_LETTERS.filter((l) => isLetterUnlocked(l) && !readLetters[l.id]?.isRead).length
+    : 0;
   const openVoucherWallet = useGameStore((s) => s.openVoucherWallet);
   const day = useGameStore((s) => s.day);
   const isVictory = useGameStore((s) => s.isVictory);
@@ -68,11 +80,11 @@ export default function HudControls() {
 
         <button
           onClick={openVoucherWallet}
-          className="relative flex items-center gap-1 rounded-lg border border-[#e3d9c9] bg-white p-1.5 text-[#4a3f35] transition-colors hover:bg-[#fdfbf7]"
+          className="relative rounded-lg border border-[#e3d9c9] bg-white p-1.5 text-[#4a3f35] transition-colors hover:bg-[#fdfbf7]"
           aria-label="Kho voucher"
+          title="🎟️ Voucher"
         >
           <Ticket className="h-4 w-4" />
-          <span className="text-xs font-bold">🎟️ Voucher</span>
           {pendingVouchers > 0 && (
             <span
               className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#e5484d] px-1 text-[9px] font-black text-white shadow-sm"
@@ -84,21 +96,53 @@ export default function HudControls() {
         </button>
 
         <button
+          onClick={openTimeCapsule}
+          className="relative rounded-lg border border-[#e3d9c9] bg-white p-1.5 text-[#4a3f35] transition-colors hover:bg-[#fdfbf7]"
+          aria-label="Hộp thư thời gian"
+          title="💌 Thư tình & đếm ngược ngày ra quân"
+        >
+          <Mail className="h-4 w-4" />
+          <AnimatePresence>
+            {freshLetters > 0 && (
+              <motion.span
+                key="ping"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0 }}
+                className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#e5484d] px-1 text-[9px] font-black text-white shadow-sm"
+                aria-hidden
+              >
+                <span className="relative flex h-2 w-2" aria-hidden>
+                  <motion.span
+                    className="absolute inline-flex h-full w-full rounded-full bg-white"
+                    animate={{ scale: [1, 2.4], opacity: [0.9, 0] }}
+                    transition={{ duration: 1.2, repeat: Infinity }}
+                  />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
+                </span>
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </button>
+
+        <button
           onClick={toggleDeathGallery}
-          className="flex items-center gap-1 rounded-lg border border-[#e3d9c9] bg-white p-1.5 text-[#4a3f35] transition-colors hover:bg-[#fdfbf7]"
+          className="flex items-center gap-0.5 rounded-lg border border-[#e3d9c9] bg-white p-1.5 text-[#4a3f35] transition-colors hover:bg-[#fdfbf7]"
           aria-label="Sổ tay cái chết"
+          title="📖 Sổ tay cái chết"
         >
           <BookOpen className="h-4 w-4" />
-          <span className="text-xs font-bold">📖 {unlockedDeathIds.length}/8</span>
+          <span className="text-[11px] font-bold tabular-nums">{unlockedDeathIds.length}/8</span>
         </button>
 
         <button
           onClick={openScrapbook}
-          className="flex items-center gap-1 rounded-lg border border-[#e3d9c9] bg-white p-1.5 text-[#4a3f35] transition-colors hover:bg-[#fdfbf7]"
+          className="flex items-center gap-0.5 rounded-lg border border-[#e3d9c9] bg-white p-1.5 text-[#4a3f35] transition-colors hover:bg-[#fdfbf7]"
           aria-label="Sổ kỷ niệm"
+          title="📷 Sổ kỷ niệm"
         >
           <Camera className="h-4 w-4" />
-          <span className="text-xs font-bold">📷 {unlockedMemoryIds.length}/{MEMORIES_DATA.length}</span>
+          <span className="text-[11px] font-bold tabular-nums">{unlockedMemoryIds.length}/{MEMORIES_DATA.length}</span>
         </button>
       </div>
 

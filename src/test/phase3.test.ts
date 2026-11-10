@@ -42,6 +42,9 @@ function resetStore(overrides: Partial<ReturnType<typeof useGameStore.getState>>
     unlockedDeathIds: [],
     redeemedVoucherIds: [],
     isDeathGalleryOpen: false,
+    hasUsedRevival: false,
+    isRevivalActive: false,
+    pendingDeathStat: null,
     ...overrides,
   } as never);
 }
@@ -59,8 +62,9 @@ describe('victory trigger', () => {
     expect(s.currentCard).toBeNull();
   });
 
-  it('a stat zero on the final day still wins with game over, not victory', () => {
+  it('a stat zero on the final day loses via game over (revival spent), not victory', () => {
     resetStore({
+      hasUsedRevival: true,
       day: 14,
       turns: 41,
       stats: { energy: 10, affection: 50, sanity: 50, wallet: 50 },
@@ -70,6 +74,20 @@ describe('victory trigger', () => {
     const s = useGameStore.getState();
     expect(s.isGameOver).toBe(true);
     expect(s.isVictory).toBe(false);
+  });
+
+  it('a stat zero on the final day is intercepted by the revival, not a victory', () => {
+    resetStore({
+      day: 14,
+      turns: 41,
+      stats: { energy: 10, affection: 50, sanity: 50, wallet: 50 },
+      currentCard: card('c1', { energy: -10 }),
+    });
+    useGameStore.getState().applyChoice('LEFT');
+    const s = useGameStore.getState();
+    expect(s.isVictory).toBe(false);
+    expect(s.isRevivalActive).toBe(true);
+    expect(s.pendingDeathStat).toBe('energy');
   });
 
   it('drawNextCard is a no-op after victory', () => {
@@ -96,6 +114,7 @@ describe('death endings & gallery persistence', () => {
   it('picking a fatal stat sets deathId to one of that stat two endings', () => {
     const energyEndings = deathsForStat('energy').map((d) => d.id);
     resetStore({
+      hasUsedRevival: true,
       stats: { energy: 5, affection: 50, sanity: 50, wallet: 50 },
       currentCard: card('c1', { energy: -10 }),
     });

@@ -39,6 +39,10 @@ export default function InventoryBar() {
   const [openItem, setOpenItem] = useState<InventoryItemId | null>(null);
   const [bursts, setBursts] = useState<Burst[]>([]);
 
+  const itemIds = Object.keys(inventory) as InventoryItemId[];
+  const openIndex = openItem ? itemIds.indexOf(openItem) : -1;
+  const openItemData = openItem ? inventory[openItem] : null;
+
   function fireBurst(itemId: InventoryItemId) {
     const newBursts = createBursts(itemId);
     setBursts((prev) => [...prev, ...newBursts]);
@@ -100,32 +104,6 @@ export default function InventoryBar() {
                 </span>
               </button>
 
-              {/* Micro-popover */}
-              <AnimatePresence>
-                {open && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 6, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 6, scale: 0.95 }}
-                    transition={{ duration: 0.15 }}
-                    role="dialog"
-                    className="absolute bottom-full left-1/2 z-20 mb-2 w-56 -translate-x-1/2 rounded-xl bg-[#4a3f35] p-3 text-xs text-[#fdfbf7] shadow-lg"
-                  >
-                    <p className="font-bold">
-                      {item.icon} {item.name}
-                    </p>
-                    <p className="mt-1 opacity-80">{item.description}</p>
-                    <button
-                      onClick={() => consume(id)}
-                      disabled={disabled}
-                      className="mt-2 w-full rounded-lg bg-[#f5a623] px-3 py-1.5 font-bold text-white disabled:opacity-40"
-                    >
-                      Dùng ngay
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
               {/* Confetti burst anchored to the pill */}
               {bursts.filter((b) => b.itemId === id).map((b) => (
                 <motion.span
@@ -147,6 +125,38 @@ export default function InventoryBar() {
           );
         })}
       </div>
+
+      {/* Micro-popover, anchored to the dock so it never bleeds past the frame */}
+      <AnimatePresence>
+        {openItem && openItemData && (
+          <motion.div
+            initial={{ opacity: 0, y: 6, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 6, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            role="dialog"
+            className="absolute inset-x-3 bottom-full z-30 mb-2 w-auto max-w-none rounded-xl bg-[#4a3f35] p-3 text-xs text-[#fdfbf7] shadow-lg"
+          >
+            <p className="font-bold">
+              {openItemData.icon} {openItemData.name}
+            </p>
+            <p className="mt-1 opacity-80">{openItemData.description}</p>
+            <button
+              onClick={() => consume(openItem)}
+              disabled={openItemData.count === 0 || isGameOver}
+              className="mt-2 w-full rounded-lg bg-[#f5a623] px-3 py-1.5 font-bold text-white disabled:opacity-40"
+            >
+              Dùng ngay
+            </button>
+            {/* Caret pointing at the active item (third of the way along the dock) */}
+            <div
+              aria-hidden
+              className="absolute top-full h-2 w-2 -translate-x-1/2 -translate-y-1 rotate-45 bg-[#4a3f35]"
+              style={{ left: `${(openIndex + 0.5) * (100 / 3)}%` }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

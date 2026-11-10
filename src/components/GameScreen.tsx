@@ -11,7 +11,11 @@ import { useGameStore } from '@/store/useGameStore';
 import { useUiStore } from '@/store/useUiStore';
 import { getActivePeriod } from '@/lib/timeContext';
 
-/** Top-level game layout for a chapter session. Card drawing lives in CardDeck. */
+/**
+ * Top-level game layout for a chapter session. Card drawing lives in CardDeck.
+ * The Time Capsule + "Gửi Nỗi Nhớ" widgets live one level up (in the page) so
+ * they can be opened from any screen, not just the in-play view.
+ */
 export default function GameScreen() {
   // Browsers require a user gesture before an AudioContext can start — unlock
   // the ASMR engine on the first tap anywhere in the game.
@@ -33,14 +37,16 @@ export default function GameScreen() {
   }, []);
 
   return (
-    <GameViewport>
-      <TopHud />
-      <StatGroup />
-      {/* Center stage: card is the protagonist, vertically centered between HUD and inventory. */}
-      <div className="my-auto flex flex-1 flex-col items-center justify-center py-3">
-        <CardDeck />
-      </div>
-      <InventoryBar />
-    </GameViewport>
+    <>
+      <GameViewport>
+        <TopHud />
+        <StatGroup />
+        {/* Center stage: card is the protagonist, vertically centered between HUD and inventory. */}
+        <div className="my-auto flex flex-1 flex-col items-center justify-center py-3">
+          <CardDeck />
+        </div>
+        <InventoryBar />
+      </GameViewport>
+    </>
   );
 }
