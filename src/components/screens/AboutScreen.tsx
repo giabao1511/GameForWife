@@ -4,15 +4,18 @@ import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
 import AmbientBackground from './AmbientBackground';
 import { useGameStore } from '@/store/useGameStore';
+import { useActiveTheme } from '@/components/effects/useActiveTheme';
+import { cn } from '@/lib/cn';
 
 /** About sub-screen: the boyfriend's personal keepsake note. */
 export default function AboutScreen() {
   const returnToTitle = useGameStore((s) => s.returnToTitle);
   const openTimeCapsule = useGameStore((s) => s.openTimeCapsule);
   const openSendMiss = useGameStore((s) => s.openSendMiss);
+  const theme = useActiveTheme();
 
   return (
-    <div className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col overflow-hidden bg-[#fff4f6] p-4 text-[#4a3f35]">
+    <div className={cn('relative mx-auto flex min-h-dvh w-full max-w-md flex-col overflow-hidden p-4', theme.textColor)}>
       <AmbientBackground />
 
       <div className="relative z-10 mb-4 flex items-center gap-2">

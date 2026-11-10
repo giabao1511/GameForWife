@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
 import AmbientBackground from './AmbientBackground';
 import { useGameStore } from '@/store/useGameStore';
+import { useActiveTheme } from '@/components/effects/useActiveTheme';
+import { cn } from '@/lib/cn';
 
 const STATS: Array<{ icon: string; label: string; desc: string }> = [
   { icon: '🔋', label: 'Pin', desc: 'Năng lượng & sức khỏe của anh.' },
@@ -15,9 +17,10 @@ const STATS: Array<{ icon: string; label: string; desc: string }> = [
 /** How-to-play sub-screen: card-based sections explaining the core loop. */
 export default function HowToPlayScreen() {
   const returnToTitle = useGameStore((s) => s.returnToTitle);
+  const theme = useActiveTheme();
 
   return (
-    <div className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col overflow-hidden bg-[#fff4f6] p-4 text-[#4a3f35]">
+    <div className={cn('relative mx-auto flex min-h-dvh w-full max-w-md flex-col overflow-hidden p-4', theme.textColor)}>
       <AmbientBackground />
 
       <div className="relative z-10 mb-4 flex items-center gap-2">

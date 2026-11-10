@@ -122,10 +122,10 @@ export default function TitleScreen() {
         </div>
 
         {/* Wordmark */}
-        <h1 className="text-center text-4xl font-black leading-none tracking-tight text-[#3b2f28]">
+        <h1 className={cn('text-center text-4xl font-black leading-none tracking-tight', theme.textColor)}>
           NUÔI&nbsp;ANH
         </h1>
-        <p className="mt-1 text-center text-sm font-medium text-[#4a3f35]/70">
+        <p className={cn('mt-1 text-center text-sm font-medium opacity-70', theme.textColor)}>
           Nhật ký sinh tồn &amp; giữ gìn tình yêu 💖
         </p>
 
@@ -207,6 +207,13 @@ export default function TitleScreen() {
             Hộp thư thời gian 🎖️
           </button>
 
+          <button
+            onClick={openThemeSelector}
+            className="w-full rounded-2xl border-2 border-[#f0d9cc] bg-white/80 px-5 py-3 text-sm font-bold text-[#4a3f35] shadow-sm transition-transform active:scale-[0.98]"
+          >
+            Đổi bối cảnh 🎨
+          </button>
+
           {!inStandalone && (
             <button
               onClick={() => setInstallGuideOpen(true)}
@@ -220,7 +227,7 @@ export default function TitleScreen() {
       </div>
 
       {/* Footer */}
-      <p className="relative z-10 pb-2 text-center text-[11px] font-medium text-[#4a3f35]/50">
+      <p className={cn('relative z-10 pb-2 text-center text-[11px] font-medium opacity-50', theme.textColor)}>
         v1.0.0 · Made with all my love ❤️
       </p>
 

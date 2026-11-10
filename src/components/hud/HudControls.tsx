@@ -1,6 +1,6 @@
 'use client';
 
-import { BookOpen, Camera, Mail, Ticket, Volume2, VolumeX, Zap } from 'lucide-react';
+import { BookOpen, Camera, Mail, Palette, Ticket, Volume2, VolumeX, Zap } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useGameStore } from '@/store/useGameStore';
 import { useUiStore } from '@/store/useUiStore';
@@ -33,6 +33,7 @@ export default function HudControls() {
   const toggleDeathGallery = useGameStore((s) => s.toggleDeathGallery);
   const unlockedDeathIds = useGameStore((s) => s.unlockedDeathIds);
   const openScrapbook = useGameStore((s) => s.openScrapbook);
+  const openThemeSelector = useGameStore((s) => s.openThemeSelector);
   const unlockedMemoryIds = useGameStore((s) => s.unlockedMemoryIds);
   const openTimeCapsule = useGameStore((s) => s.openTimeCapsule);
   const timeCapsuleHydrated = useGameStore((s) => s.timeCapsuleHydrated);
@@ -67,6 +68,15 @@ export default function HudControls() {
   return (
     <>
       <div className="flex items-center gap-1 shrink-0">
+        <button
+          onClick={openThemeSelector}
+          className="rounded-lg border border-[#e3d9c9] bg-white p-1.5 text-[#4a3f35] transition-colors hover:bg-[#fdfbf7]"
+          aria-label="Đổi bối cảnh và chủ đề"
+          title="🎨 Đổi bối cảnh &amp; chủ đề"
+        >
+          <Palette className="h-4 w-4" />
+        </button>
+
         <button
           onClick={() => setMutedState(!muted)}
           className={cn(

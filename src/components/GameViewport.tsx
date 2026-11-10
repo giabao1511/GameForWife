@@ -42,7 +42,13 @@ export default function GameViewport({ children }: { children: ReactNode }) {
         <InteractiveParticles kind={theme.particleType} accent={theme.accent} />
       </motion.div>
 
-      {children}
+      {/* Content paints above the z-0 theme/particle layer. That layer is opaque
+          on several themes (e.g. starry_camp), so the HUD, stat bars and card
+          must hold their own stacking position or they get covered. flex-1
+          keeps the card-stage centering identical to the previous layout. */}
+      <div className="relative z-10 flex flex-1 flex-col">
+        {children}
+      </div>
     </div>
   );
 }
